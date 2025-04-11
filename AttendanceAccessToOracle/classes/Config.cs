@@ -15,6 +15,8 @@ namespace AttendanceAccessToOracle.classes
         public string AccessFilePath { get; set; }
         public string AccessFilePass { get; set; }
 
+        public string SqlPath { get; set; } = $"{AppDomain.CurrentDomain.BaseDirectory}\\sql.dat";
+
         public int SyncDays { get; set; } = 0;
         public int SyncMinutes { get; set; } = 5;
 

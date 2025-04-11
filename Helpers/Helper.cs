@@ -192,16 +192,19 @@ namespace Helpers
         /// <typeparam name="T">Kiểu của đối tượng cần đọc</typeparam>
         /// <param name="filePath">Đường dẫn đến file</param>
         /// <returns>Đối tượng được khôi phục từ file</returns>
-        public static T ReadObjectFromFile<T>(string filePath) where T : new()
+        public static T ReadObjectFromFile<T>(string filePath, bool isEncrypted) where T : new()
         {
             try
             {
                 // Đọc nội dung file đã mã hóa
                 string encryptedContent = File.ReadAllText(filePath);
-
-                // Giải mã nội dung
-                string decryptedContent = EncryptionHelper.Decrypt(encryptedContent, true);
-
+                string decryptedContent = encryptedContent;
+                if (isEncrypted)
+                {
+                    // Giải mã nội dung
+                    decryptedContent = EncryptionHelper.Decrypt(encryptedContent, true);
+                }
+                    
                 // Khởi tạo đối tượng mới
                 T obj = new T();
 

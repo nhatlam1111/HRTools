@@ -30,6 +30,9 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             groupBox1 = new GroupBox();
+            label9 = new Label();
+            btnSelectSqlTemplate = new Button();
+            xSqlTemplatePath = new TextBox();
             btnSaveFileConfig = new Button();
             xSyncEachMinutes = new TextBox();
             label8 = new Label();
@@ -62,6 +65,9 @@
             // 
             // groupBox1
             // 
+            groupBox1.Controls.Add(label9);
+            groupBox1.Controls.Add(btnSelectSqlTemplate);
+            groupBox1.Controls.Add(xSqlTemplatePath);
             groupBox1.Controls.Add(btnSaveFileConfig);
             groupBox1.Controls.Add(xSyncEachMinutes);
             groupBox1.Controls.Add(label8);
@@ -82,16 +88,43 @@
             groupBox1.Controls.Add(xDbUser);
             groupBox1.Location = new Point(12, -4);
             groupBox1.Name = "groupBox1";
-            groupBox1.Size = new Size(316, 340);
+            groupBox1.Size = new Size(316, 370);
             groupBox1.TabIndex = 0;
             groupBox1.TabStop = false;
             // 
+            // label9
+            // 
+            label9.AutoSize = true;
+            label9.Location = new Point(5, 316);
+            label9.Name = "label9";
+            label9.Size = new Size(75, 15);
+            label9.TabIndex = 61;
+            label9.Text = "Sql Template";
+            // 
+            // btnSelectSqlTemplate
+            // 
+            btnSelectSqlTemplate.Location = new Point(280, 307);
+            btnSelectSqlTemplate.Name = "btnSelectSqlTemplate";
+            btnSelectSqlTemplate.Size = new Size(30, 24);
+            btnSelectSqlTemplate.TabIndex = 10;
+            btnSelectSqlTemplate.Text = "...";
+            btnSelectSqlTemplate.UseVisualStyleBackColor = true;
+            btnSelectSqlTemplate.Click += btnSelectSqlTemplate_Click;
+            // 
+            // xSqlTemplatePath
+            // 
+            xSqlTemplatePath.Location = new Point(90, 307);
+            xSqlTemplatePath.Name = "xSqlTemplatePath";
+            xSqlTemplatePath.ReadOnly = true;
+            xSqlTemplatePath.Size = new Size(184, 23);
+            xSqlTemplatePath.TabIndex = 9;
+            // 
             // btnSaveFileConfig
             // 
-            btnSaveFileConfig.Location = new Point(233, 311);
+            btnSaveFileConfig.Location = new Point(233, 341);
             btnSaveFileConfig.Name = "btnSaveFileConfig";
             btnSaveFileConfig.Size = new Size(75, 23);
-            btnSaveFileConfig.TabIndex = 10;
+            btnSaveFileConfig.TabIndex = 11;
             btnSaveFileConfig.Text = "Save";
             btnSaveFileConfig.UseVisualStyleBackColor = true;
             btnSaveFileConfig.Click += btnSaveFileConfig_Click;
@@ -258,7 +291,7 @@
             panel1.Controls.Add(gridMessage);
             panel1.Location = new Point(334, 5);
             panel1.Name = "panel1";
-            panel1.Size = new Size(454, 331);
+            panel1.Size = new Size(454, 361);
             panel1.TabIndex = 1;
             // 
             // lblCurrentLog
@@ -293,9 +326,10 @@
             btnStartStop.Location = new Point(3, 3);
             btnStartStop.Name = "btnStartStop";
             btnStartStop.Size = new Size(75, 25);
-            btnStartStop.TabIndex = 11;
+            btnStartStop.TabIndex = 12;
             btnStartStop.Text = "Start";
             btnStartStop.UseVisualStyleBackColor = false;
+            btnStartStop.Click += btnStartStop_Click;
             // 
             // gridMessage
             // 
@@ -313,7 +347,7 @@
             gridMessage.ShowCellErrors = false;
             gridMessage.ShowEditingIcon = false;
             gridMessage.ShowRowErrors = false;
-            gridMessage.Size = new Size(446, 295);
+            gridMessage.Size = new Size(446, 323);
             gridMessage.TabIndex = 0;
             // 
             // TIME
@@ -335,7 +369,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 348);
+            ClientSize = new Size(800, 374);
             Controls.Add(panel1);
             Controls.Add(groupBox1);
             FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -381,5 +415,8 @@
         private Button btnStartStop;
         private Label lblStatus;
         private Label lblCurrentLog;
+        private Label label9;
+        private Button btnSelectSqlTemplate;
+        private TextBox xSqlTemplatePath;
     }
 }
