@@ -4,3 +4,6 @@ AttendanceAccessToOracle/obj/AttendanceAccessToOracle.csproj.nuget.g.props
 AttendanceAccessToOracle/obj/
 Helpers/obj/
 HRImportData/obj/
+AttendanceAccessToOracle/bin/
+Helpers/bin/
+HRImportData/bin/
