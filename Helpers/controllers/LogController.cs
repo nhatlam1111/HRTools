@@ -6,7 +6,7 @@ namespace Helpers.controllers
     public static class LogController
     {
         public static Form DisplayForm;
-        public static TextBox DisplayText;
+        public static Control DisplayText;
 
         public static void Start(string _client)
         {

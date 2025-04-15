@@ -95,6 +95,29 @@ namespace Helpers
             return _text;
         }
 
+        public static string ReplaceText<T>(string text, T model)
+        {
+            string _text = text;
+            try
+            {
+                // Lấy tất cả các thuộc tính của đối tượng T
+                var properties = typeof(T).GetProperties();
+
+                foreach (var property in properties)
+                {
+                    string str = string.Format("$[{0}]", property.Name);
+                    _text = _text.Replace(str, ObjectToString(property.GetValue(model)));
+                }
+            }
+            catch (Exception ex)
+            {
+                // Có thể log lỗi ở đây thay vì bỏ qua lỗi
+                Console.WriteLine($"Lỗi khi thay thế text: {ex.Message}");
+            }
+            return _text;
+        }
+
+
         public static string ObjectToString(object value)
         {
             if (value == null) return "";

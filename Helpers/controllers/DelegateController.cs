@@ -10,14 +10,16 @@ namespace Helpers.controllers
     public static class DelegateController
     {
         public delegate void WriteErrorLogDelegate(string message, bool writeToLogFile);
-        public delegate void WriteInformationMessageDelegate(string message, bool writeToLogFile);
+        public delegate void WriteInformationMessageDelegate(string message, bool writeToLogFile, string tag);
         public delegate string SaveWorkbookDelegate(XSSFWorkbook workbook, string fileName);
+        public delegate void WriteUIMessageDelegate(string message, string tag);
 
 
 
         public static WriteErrorLogDelegate WriteError = WriteErrorCallback;
         public static WriteInformationMessageDelegate WriteInformation = WriteMessageCallback;
         public static SaveWorkbookDelegate SaveWorkbook = SaveAsWorkbook;
+        public static WriteUIMessageDelegate UpdateUIMessage = null;
 
 
         private static async void WriteErrorCallback(string message, bool writeToLogFile)
@@ -25,9 +27,13 @@ namespace Helpers.controllers
             LogController.Error(message, writeToLogFile);
         }
 
-        private static async void WriteMessageCallback(string message, bool writeToLogFile)
+        private static async void WriteMessageCallback(string message, bool writeToLogFile, string tag)
         {
             LogController.Information(message, writeToLogFile);
+            if (UpdateUIMessage != null)
+            {
+                UpdateUIMessage(message, tag);
+            }
         }
 
         private static string SaveAsWorkbook(XSSFWorkbook workbook, string fileName)

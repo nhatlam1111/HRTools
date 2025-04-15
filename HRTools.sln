@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Helpers", "Helpers\Helpers.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AttendanceAccessToOracle", "AttendanceAccessToOracle\AttendanceAccessToOracle.csproj", "{1EEA705A-0A25-450E-93CF-FC7624C48EF7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AttendanceSQLServerToOracle", "AttendanceSQLServerToOracle\AttendanceSQLServerToOracle.csproj", "{0A1C004F-7346-6471-D830-7510A71D2B44}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{1EEA705A-0A25-450E-93CF-FC7624C48EF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1EEA705A-0A25-450E-93CF-FC7624C48EF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1EEA705A-0A25-450E-93CF-FC7624C48EF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A1C004F-7346-6471-D830-7510A71D2B44}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A1C004F-7346-6471-D830-7510A71D2B44}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A1C004F-7346-6471-D830-7510A71D2B44}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A1C004F-7346-6471-D830-7510A71D2B44}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

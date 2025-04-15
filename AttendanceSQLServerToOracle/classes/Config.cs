@@ -12,8 +12,14 @@ namespace AttendanceAccessToOracle.classes
         public string DbUser { get; set; }
         public string DbPass { get; set; }
 
-        public string AccessFilePath { get; set; }
-        public string AccessFilePass { get; set; }
+        //public string AccessFilePath { get; set; }
+        // public string AccessFilePass { get; set; }
+
+        public string SqlHost { get; set; } = "localhost";
+        public string SqlPort { get; set; }
+        public string SqlService { get; set; } = "orcl";
+        public string SqlUserName { get; set; }
+        public string SqlPassword { get; set; }
 
         public string SqlPath { get; set; } = $"{AppDomain.CurrentDomain.BaseDirectory}\\sql.dat";
 

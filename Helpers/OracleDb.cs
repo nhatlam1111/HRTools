@@ -1,26 +1,72 @@
 ﻿using Oracle.ManagedDataAccess.Client;
 using Oracle.ManagedDataAccess.Types;
-using System;
-using System.Collections.Generic;
 using System.Data.Common;
 using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Helpers.classes;
 using Helpers.controllers;
-using System.DirectoryServices.ActiveDirectory;
+using System.Timers;
+using Serilog.Core;
+using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace Helpers
 {
     public static class OracleDb
     {
         private static OracleConnection _con;
+        public static string connectionString = "";
+        private static System.Timers.Timer timerKeepConnect;
+        public static ConnectionState State
+        {
+            get { return _con == null ? ConnectionState.Closed : _con.State; }
+        }
 
-        public static async Task<bool> Connect(string connectionString)
+        public static async Task Connect(string _connectionString, bool keepConnect)
         {
             _con = new OracleConnection();
-            _con.ConnectionString = connectionString;
+            _con.ConnectionString = string.IsNullOrEmpty(_connectionString) ? connectionString : _connectionString;
+
+            try
+            {
+                await _con.OpenAsync();
+                if (keepConnect)
+                {
+                    timerKeepConnect = new System.Timers.Timer();
+                    timerKeepConnect.Interval = 1000 * 60 * 5;
+                    timerKeepConnect.Elapsed += TimerKeepConnect_Elapsed;
+                    timerKeepConnect.Start();
+                }
+            }
+            catch (Exception e)
+            {
+                Close();
+                LogController.Error("Database: Connect; ERROR: " + e.Message);
+            }
+        }
+
+        private static async void TimerKeepConnect_Elapsed(object? sender, ElapsedEventArgs e)
+        {
+            if (_con != null && _con.State == ConnectionState.Open)
+            {
+                try
+                {
+                    if (State == ConnectionState.Broken || State == ConnectionState.Closed)
+                    {
+                        await Connect("");
+                        LogController.Information("Database: KeepConnectionAlive - Reconnect", true);
+                    }
+                }
+                catch (Exception ee)
+                {
+                    LogController.Error("Database: KeepConnectionAlive - Reconnect; ERROR: " + ee.Message);
+                }
+            }
+
+        }
+
+        public static async Task<bool> Connect(string _connectionString)
+        {
+            _con = new OracleConnection();
+            _con.ConnectionString = string.IsNullOrEmpty(_connectionString) ? connectionString : _connectionString;
 
             try
             {
@@ -35,13 +81,20 @@ namespace Helpers
 
         }
 
-        public static async void Close()
+        public static async Task Close()
         {
             if (_con != null)
             {
                 await _con.CloseAsync();
                 await _con.DisposeAsync();
                 _con = null;
+
+                if (timerKeepConnect != null)
+                {
+                    timerKeepConnect.Stop();
+                    timerKeepConnect.Dispose();
+                    timerKeepConnect = null;
+                }
             }
         }
 
@@ -92,6 +145,7 @@ namespace Helpers
             using (OracleTransaction transaction = _con.BeginTransaction())
             {
                 LogController.Information("Start transaction: ", true);
+                string tag = DateTime.Now.Ticks.ToString();
                 for (int i = 0; i < listSQL.Count; i++)
                 {
                     string sqlItem = listSQL[i];
@@ -109,13 +163,14 @@ namespace Helpers
                         await transaction.RollbackAsync();
 
                         LogController.Error(sqlItem + ": " + err, true);
+                        SetControllerMessage(err, tag);
                         LogController.Information("Rollback transaction", true);
                         LogController.Information("End transaction", true);
                         return false;
                     }
 
-                    string message = string.Format("executed {0}%", ((i + 1) * 100 / listSQL.Count));
-                    SetControllerMessage(message);
+                    string message = $"executed ({(i + 1)}/{listSQL.Count})";  //   string.Format("executed {0}%", ((i + 1) * 100 / listSQL.Count));
+                    SetControllerMessage(message, tag);
                 }
 
                 await transaction.CommitAsync();
@@ -314,9 +369,9 @@ namespace Helpers
             };
         }
 
-        private static async void SetControllerMessage(string message)
+        private static async void SetControllerMessage(string message, string tag)
         {
-            DelegateController.WriteInformation(message, false);
+            DelegateController.WriteInformation(message, false, tag);
         }
     }
 }

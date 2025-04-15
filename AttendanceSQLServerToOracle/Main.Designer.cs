@@ -31,6 +31,16 @@
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             groupConfig = new GroupBox();
+            label11 = new Label();
+            label12 = new Label();
+            xSqlPassword = new TextBox();
+            xSqlUserName = new TextBox();
+            label10 = new Label();
+            xSqlDatabase = new TextBox();
+            label3 = new Label();
+            xSqlPort = new TextBox();
+            label2 = new Label();
+            xSqlHost = new TextBox();
             xSyncUsers = new CheckBox();
             xSyncAttendance = new CheckBox();
             label9 = new Label();
@@ -42,11 +52,6 @@
             xSyncDays = new TextBox();
             label7 = new Label();
             label6 = new Label();
-            xAccessFilePass = new TextBox();
-            label3 = new Label();
-            label2 = new Label();
-            btnSelectAccessFile = new Button();
-            xAccessFilePath = new TextBox();
             label1 = new Label();
             lblServer = new Label();
             xClientList = new ComboBox();
@@ -69,6 +74,16 @@
             // 
             // groupConfig
             // 
+            groupConfig.Controls.Add(label11);
+            groupConfig.Controls.Add(label12);
+            groupConfig.Controls.Add(xSqlPassword);
+            groupConfig.Controls.Add(xSqlUserName);
+            groupConfig.Controls.Add(label10);
+            groupConfig.Controls.Add(xSqlDatabase);
+            groupConfig.Controls.Add(label3);
+            groupConfig.Controls.Add(xSqlPort);
+            groupConfig.Controls.Add(label2);
+            groupConfig.Controls.Add(xSqlHost);
             groupConfig.Controls.Add(xSyncUsers);
             groupConfig.Controls.Add(xSyncAttendance);
             groupConfig.Controls.Add(label9);
@@ -80,11 +95,6 @@
             groupConfig.Controls.Add(xSyncDays);
             groupConfig.Controls.Add(label7);
             groupConfig.Controls.Add(label6);
-            groupConfig.Controls.Add(xAccessFilePass);
-            groupConfig.Controls.Add(label3);
-            groupConfig.Controls.Add(label2);
-            groupConfig.Controls.Add(btnSelectAccessFile);
-            groupConfig.Controls.Add(xAccessFilePath);
             groupConfig.Controls.Add(label1);
             groupConfig.Controls.Add(lblServer);
             groupConfig.Controls.Add(xClientList);
@@ -94,17 +104,98 @@
             groupConfig.Controls.Add(xDbUser);
             groupConfig.Location = new Point(12, -4);
             groupConfig.Name = "groupConfig";
-            groupConfig.Size = new Size(316, 398);
+            groupConfig.Size = new Size(316, 491);
             groupConfig.TabIndex = 0;
             groupConfig.TabStop = false;
+            // 
+            // label11
+            // 
+            label11.AutoSize = true;
+            label11.Location = new Point(169, 253);
+            label11.Name = "label11";
+            label11.Size = new Size(57, 15);
+            label11.TabIndex = 71;
+            label11.Text = "Password";
+            // 
+            // label12
+            // 
+            label12.AutoSize = true;
+            label12.Location = new Point(6, 253);
+            label12.Name = "label12";
+            label12.Size = new Size(65, 15);
+            label12.TabIndex = 70;
+            label12.Text = "User Name";
+            // 
+            // xSqlPassword
+            // 
+            xSqlPassword.Location = new Point(169, 271);
+            xSqlPassword.Name = "xSqlPassword";
+            xSqlPassword.PasswordChar = '*';
+            xSqlPassword.Size = new Size(139, 23);
+            xSqlPassword.TabIndex = 8;
+            // 
+            // xSqlUserName
+            // 
+            xSqlUserName.Location = new Point(6, 271);
+            xSqlUserName.Name = "xSqlUserName";
+            xSqlUserName.Size = new Size(148, 23);
+            xSqlUserName.TabIndex = 7;
+            // 
+            // label10
+            // 
+            label10.AutoSize = true;
+            label10.Location = new Point(6, 206);
+            label10.Name = "label10";
+            label10.Size = new Size(95, 15);
+            label10.TabIndex = 67;
+            label10.Text = "Database Service";
+            // 
+            // xSqlDatabase
+            // 
+            xSqlDatabase.Location = new Point(6, 224);
+            xSqlDatabase.Name = "xSqlDatabase";
+            xSqlDatabase.Size = new Size(302, 23);
+            xSqlDatabase.TabIndex = 6;
+            // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Location = new Point(169, 158);
+            label3.Name = "label3";
+            label3.Size = new Size(29, 15);
+            label3.TabIndex = 65;
+            label3.Text = "Port";
+            // 
+            // xSqlPort
+            // 
+            xSqlPort.Location = new Point(169, 176);
+            xSqlPort.Name = "xSqlPort";
+            xSqlPort.Size = new Size(139, 23);
+            xSqlPort.TabIndex = 5;
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new Point(6, 158);
+            label2.Name = "label2";
+            label2.Size = new Size(32, 15);
+            label2.TabIndex = 63;
+            label2.Text = "Host";
+            // 
+            // xSqlHost
+            // 
+            xSqlHost.Location = new Point(6, 176);
+            xSqlHost.Name = "xSqlHost";
+            xSqlHost.Size = new Size(148, 23);
+            xSqlHost.TabIndex = 4;
             // 
             // xSyncUsers
             // 
             xSyncUsers.AutoSize = true;
-            xSyncUsers.Location = new Point(169, 344);
+            xSyncUsers.Location = new Point(169, 436);
             xSyncUsers.Name = "xSyncUsers";
             xSyncUsers.Size = new Size(82, 19);
-            xSyncUsers.TabIndex = 12;
+            xSyncUsers.TabIndex = 14;
             xSyncUsers.Text = "Sync Users";
             xSyncUsers.UseVisualStyleBackColor = true;
             xSyncUsers.Visible = false;
@@ -114,17 +205,17 @@
             xSyncAttendance.AutoSize = true;
             xSyncAttendance.Checked = true;
             xSyncAttendance.CheckState = CheckState.Checked;
-            xSyncAttendance.Location = new Point(6, 344);
+            xSyncAttendance.Location = new Point(6, 436);
             xSyncAttendance.Name = "xSyncAttendance";
             xSyncAttendance.Size = new Size(115, 19);
-            xSyncAttendance.TabIndex = 11;
+            xSyncAttendance.TabIndex = 13;
             xSyncAttendance.Text = "Sync Attendance";
             xSyncAttendance.UseVisualStyleBackColor = true;
             // 
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new Point(5, 316);
+            label9.Location = new Point(5, 408);
             label9.Name = "label9";
             label9.Size = new Size(75, 15);
             label9.TabIndex = 61;
@@ -132,44 +223,44 @@
             // 
             // btnSelectSqlTemplate
             // 
-            btnSelectSqlTemplate.Location = new Point(280, 307);
+            btnSelectSqlTemplate.Location = new Point(280, 399);
             btnSelectSqlTemplate.Name = "btnSelectSqlTemplate";
             btnSelectSqlTemplate.Size = new Size(30, 24);
-            btnSelectSqlTemplate.TabIndex = 10;
+            btnSelectSqlTemplate.TabIndex = 12;
             btnSelectSqlTemplate.Text = "...";
             btnSelectSqlTemplate.UseVisualStyleBackColor = true;
             btnSelectSqlTemplate.Click += btnSelectSqlTemplate_Click;
             // 
             // xSqlTemplatePath
             // 
-            xSqlTemplatePath.Location = new Point(90, 307);
+            xSqlTemplatePath.Location = new Point(90, 399);
             xSqlTemplatePath.Name = "xSqlTemplatePath";
             xSqlTemplatePath.ReadOnly = true;
             xSqlTemplatePath.Size = new Size(184, 23);
-            xSqlTemplatePath.TabIndex = 9;
+            xSqlTemplatePath.TabIndex = 11;
             // 
             // btnSaveFileConfig
             // 
-            btnSaveFileConfig.Location = new Point(235, 369);
+            btnSaveFileConfig.Location = new Point(235, 461);
             btnSaveFileConfig.Name = "btnSaveFileConfig";
             btnSaveFileConfig.Size = new Size(75, 23);
-            btnSaveFileConfig.TabIndex = 13;
+            btnSaveFileConfig.TabIndex = 15;
             btnSaveFileConfig.Text = "Save";
             btnSaveFileConfig.UseVisualStyleBackColor = true;
             btnSaveFileConfig.Click += btnSaveFileConfig_Click;
             // 
             // xSyncEachMinutes
             // 
-            xSyncEachMinutes.Location = new Point(169, 281);
+            xSyncEachMinutes.Location = new Point(169, 373);
             xSyncEachMinutes.Name = "xSyncEachMinutes";
             xSyncEachMinutes.Size = new Size(139, 23);
-            xSyncEachMinutes.TabIndex = 8;
+            xSyncEachMinutes.TabIndex = 10;
             xSyncEachMinutes.KeyPress += xSyncEachMinutes_KeyPress;
             // 
             // label8
             // 
             label8.AutoSize = true;
-            label8.Location = new Point(6, 289);
+            label8.Location = new Point(6, 381);
             label8.Name = "label8";
             label8.Size = new Size(158, 15);
             label8.TabIndex = 58;
@@ -177,16 +268,16 @@
             // 
             // xSyncDays
             // 
-            xSyncDays.Location = new Point(169, 252);
+            xSyncDays.Location = new Point(169, 344);
             xSyncDays.Name = "xSyncDays";
             xSyncDays.Size = new Size(139, 23);
-            xSyncDays.TabIndex = 7;
+            xSyncDays.TabIndex = 9;
             xSyncDays.KeyPress += xSyncDays_KeyPress;
             // 
             // label7
             // 
             label7.AutoSize = true;
-            label7.Location = new Point(6, 260);
+            label7.Location = new Point(6, 352);
             label7.Name = "label7";
             label7.Size = new Size(135, 15);
             label7.TabIndex = 56;
@@ -196,55 +287,11 @@
             // 
             label6.AutoSize = true;
             label6.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label6.Location = new Point(6, 226);
+            label6.Location = new Point(6, 318);
             label6.Name = "label6";
             label6.Size = new Size(70, 21);
             label6.TabIndex = 55;
             label6.Text = "Options";
-            // 
-            // xAccessFilePass
-            // 
-            xAccessFilePass.Location = new Point(75, 181);
-            xAccessFilePass.Name = "xAccessFilePass";
-            xAccessFilePass.PasswordChar = '*';
-            xAccessFilePass.Size = new Size(233, 23);
-            xAccessFilePass.TabIndex = 6;
-            // 
-            // label3
-            // 
-            label3.AutoSize = true;
-            label3.Location = new Point(6, 189);
-            label3.Name = "label3";
-            label3.Size = new Size(57, 15);
-            label3.TabIndex = 53;
-            label3.Text = "Password";
-            // 
-            // label2
-            // 
-            label2.AutoSize = true;
-            label2.Location = new Point(5, 161);
-            label2.Name = "label2";
-            label2.Size = new Size(64, 15);
-            label2.TabIndex = 52;
-            label2.Text = "File (.mdb)";
-            // 
-            // btnSelectAccessFile
-            // 
-            btnSelectAccessFile.Location = new Point(280, 152);
-            btnSelectAccessFile.Name = "btnSelectAccessFile";
-            btnSelectAccessFile.Size = new Size(30, 24);
-            btnSelectAccessFile.TabIndex = 5;
-            btnSelectAccessFile.Text = "...";
-            btnSelectAccessFile.UseVisualStyleBackColor = true;
-            btnSelectAccessFile.Click += btnSelectAccessFile_Click;
-            // 
-            // xAccessFilePath
-            // 
-            xAccessFilePath.Location = new Point(75, 152);
-            xAccessFilePath.Name = "xAccessFilePath";
-            xAccessFilePath.ReadOnly = true;
-            xAccessFilePath.Size = new Size(199, 23);
-            xAccessFilePath.TabIndex = 4;
             // 
             // label1
             // 
@@ -252,9 +299,9 @@
             label1.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label1.Location = new Point(6, 130);
             label1.Name = "label1";
-            label1.Size = new Size(91, 21);
+            label1.Size = new Size(92, 21);
             label1.TabIndex = 49;
-            label1.Text = "Access File";
+            label1.Text = "SQL Server";
             // 
             // lblServer
             // 
@@ -320,7 +367,7 @@
             panel1.Controls.Add(gridMessage);
             panel1.Location = new Point(334, 5);
             panel1.Name = "panel1";
-            panel1.Size = new Size(454, 389);
+            panel1.Size = new Size(454, 482);
             panel1.TabIndex = 1;
             // 
             // lblCurrentLog
@@ -354,7 +401,7 @@
             btnStartStop.Location = new Point(3, 3);
             btnStartStop.Name = "btnStartStop";
             btnStartStop.Size = new Size(75, 25);
-            btnStartStop.TabIndex = 14;
+            btnStartStop.TabIndex = 16;
             btnStartStop.Text = "Start";
             btnStartStop.UseVisualStyleBackColor = false;
             btnStartStop.Click += btnStartStop_Click;
@@ -375,7 +422,7 @@
             gridMessage.ShowCellErrors = false;
             gridMessage.ShowEditingIcon = false;
             gridMessage.ShowRowErrors = false;
-            gridMessage.Size = new Size(446, 353);
+            gridMessage.Size = new Size(446, 446);
             gridMessage.TabIndex = 0;
             // 
             // TIME
@@ -404,7 +451,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 399);
+            ClientSize = new Size(800, 499);
             Controls.Add(panel1);
             Controls.Add(groupConfig);
             FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -432,12 +479,7 @@
         private Label label5;
         private TextBox xDbPass;
         private TextBox xDbUser;
-        private Button btnSelectAccessFile;
-        private TextBox xAccessFilePath;
         private Label label1;
-        private TextBox xAccessFilePass;
-        private Label label3;
-        private Label label2;
         private TextBox xSyncEachMinutes;
         private Label label8;
         private TextBox xSyncDays;
@@ -456,6 +498,16 @@
         private TextBox xSqlTemplatePath;
         private CheckBox xSyncUsers;
         private CheckBox xSyncAttendance;
+        private Label label11;
+        private Label label12;
+        private TextBox xSqlPassword;
+        private TextBox xSqlUserName;
+        private Label label10;
+        private TextBox xSqlDatabase;
+        private Label label3;
+        private TextBox xSqlPort;
+        private Label label2;
+        private TextBox xSqlHost;
         private NotifyIcon notifyIcon;
     }
 }

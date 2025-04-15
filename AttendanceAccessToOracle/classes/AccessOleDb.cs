@@ -7,17 +7,15 @@ namespace AttendanceAccessToOracle.classes
 {
     public static class AccessOleDb
     {
-        public const string connectionStringAccess = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source={0};Mode=Read;Jet OLEDB:Database Password={1}";
+        public static string connectionStringAccess = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={0};Jet OLEDB:Database Password={2};Persist Security Info=False";
 
         public static async Task<DataTable> ReadData(string sql)
         {
             DataTable dt = new DataTable();
 
-            string connString = string.Format(connectionStringAccess, MainController.config.AccessFilePath, MainController.config.AccessFilePass);
-
             try
             {
-                using (OleDbConnection accessConn = new OleDbConnection(connString))
+                using (OleDbConnection accessConn = new OleDbConnection(connectionStringAccess))
                 {
                     await accessConn.OpenAsync();
 
@@ -37,7 +35,8 @@ namespace AttendanceAccessToOracle.classes
             }
             catch (Exception ex)
             {
-                LogController.Information(ex.Message);
+                LogController.Error(ex.Message);
+                MainController.UpdateUIMessage(ex.Message, null);
             }
 
             return dt;

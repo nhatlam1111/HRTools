@@ -10,12 +10,13 @@ namespace AttendanceAccessToOracle
         [STAThread]
         static void Main()
         {
-            if (IsProcessOpen("AttendanceAccessToOracle"))
+            if (IsProcessOpen("AttendanceSQLServerToOracle"))
             {
                 //MessageBox.Show("This application is currently running", "GW Union", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 Application.Exit();
                 return;
             }
+
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();

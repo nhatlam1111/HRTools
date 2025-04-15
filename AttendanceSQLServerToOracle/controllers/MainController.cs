@@ -30,9 +30,10 @@ namespace AttendanceAccessToOracle.controllers
             string accessMode = config.SyncUser ? "ReadWrite" : "Read";
 
             OracleDb.connectionString = $"Data Source={Helper.clientList[config.Client].Replace("\r\n", "").Replace(" ", "")};User Id={config.DbUser};Password={config.DbPass};";
-            AccessOleDb.connectionStringAccess = string.Format(AccessOleDb.connectionStringAccess, config.AccessFilePath, accessMode, config.AccessFilePass);
+            SqlServerDb.connectionString = Helper.ReplaceText(SqlServerDb.connectionString, config);
 
             OracleDb.Connect("", true);
+            SqlServerDb.Connect("", true);
 
             if (config.SyncAttendance)
             {
@@ -62,6 +63,7 @@ namespace AttendanceAccessToOracle.controllers
             UpdateUIMessage("Stop Sync data", null);
 
             OracleDb.Close();
+            SqlServerDb.Close();
             if (timerSyncAttendance != null)
             {
                 timerSyncAttendance.Stop();
@@ -116,7 +118,7 @@ namespace AttendanceAccessToOracle.controllers
                 UpdateUIMessage("Start sync Attendance", null);
                 
 
-                var dt = await AccessOleDb.ReadData(sqlAccess);
+                var dt = await SqlServerDb.excuteSQLAsync(sqlAccess);
                 attendanceListAccess = Helper.DatatableToList<AttendanceModel>(dt);
 
                 var dtOracle = await OracleDb.excuteSQLAsync(sqlOracle);

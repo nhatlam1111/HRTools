@@ -33,7 +33,6 @@ namespace AttendanceAccessToOracle
             {
                 btnStartStop_Click(null, null);
             }
-            
         }
 
         private void btnSaveFileConfig_Click(object sender, EventArgs e)
@@ -45,8 +44,11 @@ namespace AttendanceAccessToOracle
                     Client = xClientList.SelectedItem + "",
                     DbUser = xDbUser.Text,
                     DbPass = xDbPass.Text,
-                    AccessFilePath = xAccessFilePath.Text,
-                    AccessFilePass = xAccessFilePass.Text,
+                    SqlHost = xSqlHost.Text,
+                    SqlPort = xSqlPort.Text,
+                    SqlService = xSqlDatabase.Text,
+                    SqlUserName = xSqlUserName.Text,
+                    SqlPassword = xSqlPassword.Text,
                     SyncDays = int.Parse(xSyncDays.Text ?? "0"),
                     SyncMinutes = int.Parse(xSyncEachMinutes.Text ?? "0"),
                     SqlPath = xSqlTemplatePath.Text,
@@ -74,8 +76,11 @@ namespace AttendanceAccessToOracle
                 xClientList.SelectedItem = config.Client;
                 xDbUser.Text = config.DbUser;
                 xDbPass.Text = config.DbPass;
-                xAccessFilePath.Text = config.AccessFilePath;
-                xAccessFilePass.Text = config.AccessFilePass;
+                xSqlHost.Text = config.SqlHost;
+                xSqlPort.Text = config.SqlPort;
+                xSqlDatabase.Text = config.SqlService;
+                xSqlUserName.Text = config.SqlUserName;
+                xSqlPassword.Text = config.SqlPassword;
                 xSyncDays.Text = config.SyncDays.ToString();
                 xSyncEachMinutes.Text = config.SyncMinutes.ToString();
                 xSqlTemplatePath.Text = config.SqlPath;
@@ -111,9 +116,33 @@ namespace AttendanceAccessToOracle
                 return false;
             }
 
-            if (string.IsNullOrEmpty(xAccessFilePath.Text))
+            if (string.IsNullOrEmpty(xSqlHost.Text))
             {
-                MessageBox.Show("Please select Access File.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Please enter Sql Host.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(xSqlPort.Text))
+            {
+                MessageBox.Show("Please enter Sql Port.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(xSqlDatabase.Text))
+            {
+                MessageBox.Show("Please enter Sql Database.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(xSqlUserName.Text))
+            {
+                MessageBox.Show("Please enter Sql User Name.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(xSqlPassword.Text))
+            {
+                MessageBox.Show("Please enter Sql Password.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
 
@@ -152,22 +181,6 @@ namespace AttendanceAccessToOracle
             }
         }
 
-        private void btnSelectAccessFile_Click(object sender, EventArgs e)
-        {
-            OpenFileDialog openFileDialog1 = new OpenFileDialog();
-            openFileDialog1.InitialDirectory = Directory.GetCurrentDirectory();
-            openFileDialog1.Filter = "Access(*.mdb)|*.mdb";
-            openFileDialog1.FilterIndex = 0;
-
-            if (openFileDialog1.ShowDialog() != DialogResult.OK)
-            {
-                return;
-            }
-            var path = openFileDialog1.FileName;
-
-            xAccessFilePath.Text = path;
-        }
-
         private void btnSelectSqlTemplate_Click(object sender, EventArgs e)
         {
             OpenFileDialog openFileDialog1 = new OpenFileDialog();
@@ -198,8 +211,11 @@ namespace AttendanceAccessToOracle
                     Client = xClientList.SelectedItem + "",
                     DbUser = xDbUser.Text,
                     DbPass = xDbPass.Text,
-                    AccessFilePath = xAccessFilePath.Text,
-                    AccessFilePass = xAccessFilePass.Text,
+                    SqlHost = xSqlHost.Text,
+                    SqlPort = xSqlPort.Text,
+                    SqlService = xSqlDatabase.Text,
+                    SqlUserName = xSqlUserName.Text,
+                    SqlPassword = xSqlPassword.Text,
                     SyncDays = int.Parse(xSyncDays.Text ?? "0"),
                     SyncMinutes = int.Parse(xSyncEachMinutes.Text ?? "0"),
                     SqlPath = xSqlTemplatePath.Text,
