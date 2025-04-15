@@ -7,3 +7,5 @@ HRImportData/obj/
 AttendanceAccessToOracle/bin/
 Helpers/bin/
 HRImportData/bin/
+AttendanceSQLServerToOracle/bin/
+AttendanceSQLServerToOracle/obj/
