@@ -16,6 +16,3 @@
 #[ORACLE_SELECT_USER]=select q.USER_ID, q.USER_NAME, q.CARD_ID, q.PASSWORD from thr_unis_user q where q.del_if = 0 and nvl(q.UPLOAD_YN, 'N') = 'N'
 #[ORACLE_INSERT_USER]: hệ thống của mình hiện tại ko insert ngược từ phần mềm khác vào
 #[ORACLE_UPDATE_USER]=update thr_unis_user q set q.remark = nvl('$[REMARK]', q.remark), q.upload_yn = 'Y', mod_by = 'auto-sync', mod_dt = sysdate where q.del_if = 0 and q.user_id = '$[USER_ID]'
-
-
-select id as USER_ID, 
