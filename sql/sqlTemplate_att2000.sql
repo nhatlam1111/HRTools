@@ -5,7 +5,7 @@
 #$[to_dt]: format YYYYMMDD là ngày hiện tại
 
 #ACCESS
-[ACCESS_SELECT_ATTENDANCE]=select CStr(USERID) as USER_ID, '' AS CARD_ID, Format(CHECKTIME, 'yyyymmdd') as WORK_DATE, Format(CHECKTIME, 'HH:mm') as WORK_TIME, Format(CHECKTIME, 'yyyymmddHHmmss') as WORK_DATE_FULL, CHECKTYPE as EVT, sn as MACHINE_ID from CHECKINOUT where Format(CHECKTIME, 'yyyymmdd') between '$[from_dt]' and '$[to_dt]'
+[ACCESS_SELECT_ATTENDANCE]=select (select Badgenumber from userinfo where userid = b.userid) as USER_ID, '' AS CARD_ID, Format(CHECKTIME, 'yyyymmdd') as WORK_DATE, Format(CHECKTIME, 'HH:mm') as WORK_TIME, Format(CHECKTIME, 'yyyymmddHHmmss') as WORK_DATE_FULL, CHECKTYPE as EVT, sn as MACHINE_ID from CHECKINOUT b where Format(CHECKTIME, 'yyyymmdd') between '$[from_dt]' and '$[to_dt]'
 [ACCESS_SELECT_USER]
 [ACCESS_INSERT_USER]
 

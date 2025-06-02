@@ -9,3 +9,11 @@ Helpers/bin/
 HRImportData/bin/
 AttendanceSQLServerToOracle/bin/
 AttendanceSQLServerToOracle/obj/
+HelpersNetFramework/classes/
+HelpersNetFramework/obj/Debug/.NETFramework,Version=v4.7.2.AssemblyAttributes.cs
+HelpersNetFramework/obj/
+packages/
+HelpersNetFramework/Properties/
+UnionApp/bin/
+UnionApp/obj/
+UnionApp/Properties/

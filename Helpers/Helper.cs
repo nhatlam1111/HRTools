@@ -3,6 +3,7 @@ using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -296,6 +297,22 @@ namespace Helpers
 
             // Trường hợp mặc định
             return Convert.ChangeType(value, targetType);
+        }
+
+        public static bool IsProcessOpen(string name)
+        {
+            //int count = 0;
+            Process currentProcess = Process.GetCurrentProcess();
+            foreach (Process clsProcess in Process.GetProcessesByName(name))
+            {
+                if (currentProcess.Id != clsProcess.Id)
+                {
+
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }
