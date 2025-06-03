@@ -12,8 +12,8 @@ namespace UnionApp.classes
 
     public enum DEVICE_STATUS
     {
-        CONNECTED,
         DISCONNECTED,
+        CONNECTED,
         LOCK,
         DELETE,
     }

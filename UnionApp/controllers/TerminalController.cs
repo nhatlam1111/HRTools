@@ -203,6 +203,7 @@ namespace UnionApp.controllers
             else
             {
                 devices[idx].Status = DEVICE_STATUS.CONNECTED;
+                devices[idx].IP = TerminalIP;
             }
 
             UpdateDatabase(nameof(sqlTemplates.DEVICE_UPDATE_STATUS), sqlTemplates.DEVICE_UPDATE_STATUS, devices[idx]);
@@ -289,7 +290,7 @@ namespace UnionApp.controllers
 
         private static async Task UpdateDatabase(string template, string sql, object data)
         {
-            if (template == nameof(sqlTemplates.DEVICE_GET_LIST))
+            if (template == nameof(sqlTemplates.DEVICE_UPDATE_STATUS))
             {
                 Device device = data as Device;
                 sql = Helper.ReplaceText(sql, device);
@@ -298,6 +299,8 @@ namespace UnionApp.controllers
                 {
                     await OracleDb.excuteSQLCommandAsync(sql);
                 }
+
+                devices.ResetBindings();
             }
         }
     }
