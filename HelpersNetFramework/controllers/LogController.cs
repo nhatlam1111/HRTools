@@ -36,82 +36,83 @@ namespace Helpers.controllers
 
         private static void SetControlMessage(string messageTemplate)
         {
-            lock (LogMessages)
+            LogMessages.Insert(0, new LogMessage() { Time = DateTime.Now, Message = messageTemplate });
+
+            if(LogMessages.Count > 500)
             {
-                LogMessages.Insert(0, new LogMessage() { Time = DateTime.Now, Message = messageTemplate });
+                LogMessages.RemoveAt(LogMessages.Count - 1); // Keep the last 500 messages
             }
 
             if (DisplayForm != null && DisplayText != null) ThreadController.SetText(DisplayForm, DisplayText, messageTemplate);
-            //if (DisplayDataGridview != null) ThreadController.SetGridView(DisplayForm, DisplayDataGridview, new string[] { DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"), messageTemplate }, DateTime.Now.Ticks.ToString() +Helper.RandomString(5));
         }
 
-        public static async void Information(string messageTemplate)
+        public static void Information(string messageTemplate)
         { 
             Log.Information(messageTemplate);
             SetControlMessage(messageTemplate);
         }
 
-        public static async void Information<T>(string messageTemplate, T propertyValue)
+        public static void Information<T>(string messageTemplate, T propertyValue)
         {
             Log.Information(messageTemplate, propertyValue);
             SetControlMessage(messageTemplate);
         }
 
-        public static async void Information(string messageTemplate, bool writeToLogFile)
+        public static void Information(string messageTemplate, bool writeToLogFile)
         {
             if (writeToLogFile) Log.Information(messageTemplate);
             SetControlMessage(messageTemplate);
         }
 
-        public static async void Information<T>(string messageTemplate, T propertyValue, bool writeToLogFile)
+        public static void Information<T>(string messageTemplate, T propertyValue, bool writeToLogFile)
         {
             if(writeToLogFile) Log.Information(messageTemplate, propertyValue);
             SetControlMessage(messageTemplate);
         }
 
-        public static async void Error(string messageTemplate)
+        public static void Error(string messageTemplate)
         {
             Log.Error(messageTemplate);
             SetControlMessage(messageTemplate);
         }
 
-        public static async void Error<T>(string messageTemplate, T propertyValue)
+        public static void Error<T>(string messageTemplate, T propertyValue)
         {
             Log.Error(messageTemplate, propertyValue);
             SetControlMessage(messageTemplate);
         }
 
-        public static async void Error(string messageTemplate, bool writeToLogFile)
+        public static void Error(string messageTemplate, bool writeToLogFile)
         {
             if (writeToLogFile) Log.Error(messageTemplate);
             SetControlMessage(messageTemplate);
         }
 
-        public static async void Error<T>(string messageTemplate, T propertyValue, bool writeToLogFile)
+        public static void Error<T>(string messageTemplate, T propertyValue, bool writeToLogFile)
         {
             if (writeToLogFile) Log.Error(messageTemplate, propertyValue);
             SetControlMessage(messageTemplate);
         }
 
-        public static async void Warning(string messageTemplate)
+        public static void Warning(string messageTemplate)
         {
             Log.Warning(messageTemplate);
             SetControlMessage(messageTemplate);
         }
 
-        public static async void Warning<T>(string messageTemplate, T propertyValue)
+        public static void Warning<T>(string messageTemplate, T propertyValue)
         {
             Log.Warning(messageTemplate, propertyValue);
             SetControlMessage(messageTemplate);
         }
 
-        public static async void Warning(string messageTemplate, bool writeToLogFile)
+        public static void Warning(string messageTemplate, bool writeToLogFile)
         {
             if (writeToLogFile) Log.Warning(messageTemplate);
             SetControlMessage(messageTemplate);
         }
 
-        public static async void Warning<T>(string messageTemplate, T propertyValue, bool writeToLogFile)
+        public static void Warning<T>(string messageTemplate, T propertyValue, bool writeToLogFile)
         {
             if (writeToLogFile) Log.Warning(messageTemplate, propertyValue);
             SetControlMessage(messageTemplate);

@@ -205,7 +205,7 @@ namespace UnionApp.controllers
                 devices[idx].Status = DEVICE_STATUS.CONNECTED;
             }
 
-            UpdateDatabase(nameof(sqlTemplates.DEVICE_GET_LIST), sqlTemplates.DEVICE_GET_LIST, devices[idx]);
+            UpdateDatabase(nameof(sqlTemplates.DEVICE_UPDATE_STATUS), sqlTemplates.DEVICE_UPDATE_STATUS, devices[idx]);
 
             LogController.Information($"Terminal {TerminalID}[{TerminalIP}] connected", true);
         }
@@ -218,7 +218,7 @@ namespace UnionApp.controllers
                 devices[idx].Status = DEVICE_STATUS.DISCONNECTED;
             }
 
-            UpdateDatabase(nameof(sqlTemplates.DEVICE_GET_LIST), sqlTemplates.DEVICE_GET_LIST, devices[idx]);
+            UpdateDatabase(nameof(sqlTemplates.DEVICE_UPDATE_STATUS), sqlTemplates.DEVICE_UPDATE_STATUS, devices[idx]);
 
             LogController.Information($"Terminal {TerminalID} disconnected", true);
         }
