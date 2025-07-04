@@ -11,5 +11,7 @@ namespace UnionApp.classes
     {
         public string DEVICE_GET_LIST { get; set; }
         public string DEVICE_UPDATE_STATUS { get; set; }
+        public string THR_ENTER_INSERT { get; set; }
+        public string THR_TIME_TEMP_INSERT { get; set; }
     }
 }

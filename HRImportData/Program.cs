@@ -1,5 +1,7 @@
+using Helpers.controllers;
 using HRImportData.Classes;
 using HRImportData.Forms;
+using Serilog.Core;
 
 namespace HRImportData
 {
@@ -11,7 +13,7 @@ namespace HRImportData
         [STAThread]
         static void Main()
         {
-            SetupLogging.Start(null);
+            LogController.Start(null);
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();

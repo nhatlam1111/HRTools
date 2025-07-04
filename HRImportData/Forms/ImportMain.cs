@@ -1,6 +1,9 @@
-﻿using HRImportData.Classes;
+﻿using Helpers.controllers;
+using HRImportData.Classes;
 using HRImportData.Controllers;
+using NPOI.Util;
 using Oracle.ManagedDataAccess.Client;
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.IO;
@@ -18,7 +21,7 @@ namespace HRImportData.Forms
             InitializeComponent();
 
             //set lại log theo client
-            SetupLogging.Start($"{MainController.currentLogin.Site}-{MainController.currentLogin.DbUserName}");
+            LogController.Start($"{MainController.currentLogin.Site}-{MainController.currentLogin.DbUserName}");
             LogController.Information("Login: {0}", $"{MainController.currentLogin.SiteUserName}");
 
             this.Text = $"HR Import - [{MainController.currentLogin.Site}-{MainController.currentLogin.DbUserName}-{MainController.currentLogin.SiteUserName}]";
@@ -43,6 +46,8 @@ namespace HRImportData.Forms
             groupBoxMapping.Enabled = false;
             panelControls.Enabled = false;
             ctrTableImport.Enabled = false;
+
+            btnReferenceFunction.Enabled = true;
 
             ImportController.frmImport = this;
             ImportController.Init();
@@ -224,6 +229,8 @@ namespace HRImportData.Forms
             bindingMapping.DataSource = ImportController.dtColumnMapping;
             gridColumnMapping.DataSource = bindingMapping;
 
+
+            //column mapping database
             DataGridViewComboBoxColumn comboBoxDbColumn = new DataGridViewComboBoxColumn();
             comboBoxDbColumn.DataSource = ImportController.DatabaseColumns;
             comboBoxDbColumn.DisplayMember = "column_name";
@@ -234,9 +241,26 @@ namespace HRImportData.Forms
             gridColumnMapping.Columns.RemoveAt(1);
             gridColumnMapping.Columns.Insert(1, comboBoxDbColumn);
 
+
+            //column referencefunction
+            var bindingListRef = ImportController.referenceFunctions.Copy();
+            bindingListRef.Insert(0, new Classes.ReferenceFunction() { Name = " ", Sql = "" }); // Add a default option for no reference function
+            DataGridViewComboBoxColumn comboBoxRefFunction = new DataGridViewComboBoxColumn();
+            comboBoxRefFunction.DataSource = bindingListRef;
+            comboBoxRefFunction.DisplayMember = "Name";
+            comboBoxRefFunction.ValueMember = "Sql";
+            comboBoxRefFunction.DataPropertyName = "Reference";
+            comboBoxRefFunction.HeaderText = "Reference Function";
+
+            gridColumnMapping.Columns.RemoveAt(4);
+            gridColumnMapping.Columns.Insert(4, comboBoxRefFunction);
+
+
+
+
             foreach (DataGridViewColumn col in gridColumnMapping.Columns)
             {
-                if (col.DataPropertyName == "Database" || col.DataPropertyName == "DBMapping") col.ReadOnly = false;
+                if (col.DataPropertyName == "Database" || col.DataPropertyName == "DBMapping" || col.DataPropertyName == "Reference") col.ReadOnly = false;
                 else col.ReadOnly = true;
             }
 
@@ -303,6 +327,11 @@ namespace HRImportData.Forms
                 return;
             }
 
+            if (!ImportController.ValidateBeforeImport())
+            {
+                return;
+            }
+
             string importTypeName = Enum.GetName(typeof(IMPORT_TYPE), ImportController.ImportType);
 
             if (!string.IsNullOrEmpty(importTypeName))
@@ -329,7 +358,7 @@ namespace HRImportData.Forms
                 }
 
                 ImportDialogConfirm importDialogConfirm = new ImportDialogConfirm();
-                
+
                 DialogResult dialogResult = importDialogConfirm.ShowDialog();
 
                 if (dialogResult == DialogResult.OK)
@@ -341,7 +370,7 @@ namespace HRImportData.Forms
 
             }
 
-            
+
 
 
 
@@ -392,24 +421,24 @@ namespace HRImportData.Forms
 
         private void ctrTableImport_SelectedValueChanged(object sender, EventArgs e)
         {
-			btnExport.Enabled = false;
-			if (ctrTableImport.SelectedValue is string selectedTable)
+            btnExport.Enabled = false;
+            if (ctrTableImport.SelectedValue is string selectedTable)
             {
                 if (!string.IsNullOrEmpty(selectedTable))
                 {
                     groupBoxData.Enabled = true;
                     groupBoxMapping.Enabled = true;
                     panelControls.Enabled = true;
-					btnExport.Enabled = true;
-					ImportController.TableImport = selectedTable;
+                    btnExport.Enabled = true;
+                    ImportController.TableImport = selectedTable;
                 }
                 else
                 {
                     groupBoxData.Enabled = false;
                     groupBoxMapping.Enabled = false;
                     panelControls.Enabled = false;
-					btnExport.Enabled = false;
-				}
+                    btnExport.Enabled = false;
+                }
 
                 ImportController.Release();
                 gridColumnMapping.DataSource = null;
@@ -423,11 +452,20 @@ namespace HRImportData.Forms
         private void btnExport_Click(object sender, EventArgs e)
         {
             ExportTable();
-		}
+        }
 
         private void ExportTable()
-		{
-			ImportController.ExportTableData();
-		}
-	}
+        {
+            ImportController.ExportTableData();
+        }
+
+        private void btnReferenceFunction_Click(object sender, EventArgs e)
+        {
+            ReferenceFunctionDialog dialog = new ReferenceFunctionDialog();
+
+            DialogResult dialogResult = dialog.ShowDialog();
+
+            ImportController.InitReferenceFunction();
+        }
+    }
 }

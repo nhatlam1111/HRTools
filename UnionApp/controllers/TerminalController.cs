@@ -1,5 +1,7 @@
 ﻿using Helpers;
 using Helpers.controllers;
+using HelpersNetFramework.classes;
+using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -236,6 +238,10 @@ namespace UnionApp.controllers
                 DeviceId = TerminalID,
                 UserId = accessLogData.UserID,
                 Time = accessLogData.DateTime,
+                AuthMode = accessLogData.AuthMode.ToString(),
+                AuthType = accessLogData.AuthType.ToString(),
+                AuthResult = accessLogData.AuthResult.ToString(),
+                ThermalBurn = accessLogData.ThermalBurn.ToString()
             };
 
             if (accessLogData.PictureDataLength > 0)
@@ -252,8 +258,15 @@ namespace UnionApp.controllers
                 }
                 catch { }
             }
+            monitorings.Insert(0, monitoring);
 
-            monitorings.Add(monitoring);
+            if (monitorings.Count > 500)
+            {
+                monitorings.RemoveAt(monitorings.Count - 1); // Keep the last 500 monitorings
+            }
+
+            UpdateDatabase(nameof(sqlTemplates.THR_ENTER_INSERT), sqlTemplates.THR_ENTER_INSERT, monitoring);
+            UpdateDatabase(nameof(sqlTemplates.THR_TIME_TEMP_INSERT), sqlTemplates.THR_TIME_TEMP_INSERT, monitoring);
         }
 
         private static void ucsAPI_EventFirmwareVersion(int ClientID, int TerminalID, string Version)
@@ -290,18 +303,62 @@ namespace UnionApp.controllers
 
         private static async Task UpdateDatabase(string template, string sql, object data)
         {
-            if (template == nameof(sqlTemplates.DEVICE_UPDATE_STATUS))
+            try
             {
-                Device device = data as Device;
-                sql = Helper.ReplaceText(sql, device);
-
-                if (device.Id > 0)
+                if (template == nameof(sqlTemplates.DEVICE_UPDATE_STATUS))
                 {
-                    await OracleDb.excuteSQLCommandAsync(sql);
+                    Device device = data as Device;
+                    sql = Helper.ReplaceText(sql, device);
+
+                    if (device.Id > 0)
+                    {
+                        await OracleDb.excuteSQLCommandAsync(sql);
+                    }
+
+                    devices.ResetBindings();
                 }
 
-                devices.ResetBindings();
+                else if (template == nameof(sqlTemplates.THR_ENTER_INSERT))
+                {
+                    Monitoring monitoring = data as Monitoring;
+                    Device device = devices.ToList().Find(d => d.Id == monitoring.DeviceId);
+
+                    sql = Helper.ReplaceText(sql, monitoring);
+                    sql = Helper.ReplaceText(sql, device);
+
+                    List<OraclePara> oracleParas = new List<OraclePara>
+                    {
+                        new OraclePara { value = monitoring.DeviceId   }
+                        , new OraclePara {  value = monitoring.UserId   }
+                        , new OraclePara { value = Helper.RemoveSpecialCharacters(monitoring.Time) }
+                        , new OraclePara { value = device.CompanyPk }
+                        , new OraclePara { value = device.CompanyBranch }
+                        , new OraclePara { value = monitoring.AuthType }
+                        , new OraclePara { value = monitoring.AuthMode }
+                        , new OraclePara { value = monitoring.AuthResult }
+                        , new OraclePara { value = 0 }
+                        , new OraclePara { value = DateTime.Now }
+                        , new OraclePara { value = "SDK-REALTIME" }
+                        , new OraclePara { value = null }
+                        , new OraclePara { value = monitoring.ThermalBurn }
+                        , new OraclePara { value = monitoring.ImageBytes != null ? monitoring.ImageBytes : null, type = OracleDbType.Blob }
+                        , new OraclePara { value = monitoring.ImageBytes != null ? monitoring.ImageBytes.Length : 0 }
+                    };
+
+                    await OracleDb.excuteSQLCommandAsync(sql, oracleParas);
+                }
+                else if (template == nameof(sqlTemplates.THR_TIME_TEMP_INSERT))
+                {
+                    Monitoring monitoring = data as Monitoring;
+                    
+                }
             }
+            catch(Exception ex)
+            {
+                LogController.Error($"Error updating database: {ex.Message}");
+                return;
+            }
+            
         }
     }
 

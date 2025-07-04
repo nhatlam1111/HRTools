@@ -17,6 +17,7 @@ namespace Helpers.classes
         public string column_description { get; set; }
         public string excel_mapping { get; set; }
         public bool condition_compare { get; set; }
+        public string sql_reference { get; set; }
 
         public static List<DatabaseColumn> ToList(List<DataRow> columns)
         {
@@ -30,8 +31,9 @@ namespace Helpers.classes
                     column_type = (OracleDbType)v["Type"],
                     column_type_name = OracleDb.GetOracleDbTypeName((OracleDbType)v["Type"]),
                     column_type_size = OracleDb.GetOracleDbTypeName((OracleDbType)v["Type"]) == "varchar2" ? 4000 : 0,
-                    excel_mapping = v["Excel"] + ""
-                }); ;
+                    excel_mapping = v["Excel"] + "",
+                    sql_reference = v["Reference"] + ""
+                }) ;
             }
 
             return databaseColumns;

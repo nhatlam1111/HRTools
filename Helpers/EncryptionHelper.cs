@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Helpers
 {
-    internal static class EncryptionHelper
+    public static class EncryptionHelper
     {
         private const string SecurityKey = "2023@5NEY!!@!#!";
         private static readonly int KeySize = 32; // 256-bit key (32 bytes)

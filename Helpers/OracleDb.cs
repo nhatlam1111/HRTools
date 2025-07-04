@@ -254,7 +254,7 @@ namespace Helpers
                 new DatabaseColumn {  column_name = "", column_type = OracleDbType.Varchar2 },
             };
 
-            string sql = $"select q.column_name, q.data_type " +
+            string sql = $"select upper(q.column_name) as column_name, q.data_type " +
                 $" from USER_TAB_COLUMNS q " +
                 $" where lower(q.TABLE_NAME) = lower('{tableName}')  " +
                 $" and lower(q.column_name) not in ('mod_dt', 'mod_by', 'crt_dt', 'crt_by') " +
@@ -283,7 +283,7 @@ namespace Helpers
         {
             List<string> triggers = new List<string>();
 
-            string sql = $"select q.TRIGGER_NAME from USER_TRIGGERS q where lower(q.TABLE_NAME) = lower('{tableName}' and and q.STATUS = 'ENABLED')";
+            string sql = $"select q.TRIGGER_NAME from USER_TRIGGERS q where lower(q.TABLE_NAME) = lower('{tableName}') and q.STATUS = 'ENABLED'";
             var dtColumns = await excuteSQLAsync(sql);
 
             if (dtColumns != null && dtColumns.Rows.Count > 0)

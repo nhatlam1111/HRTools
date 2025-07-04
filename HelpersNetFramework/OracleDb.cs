@@ -148,6 +148,49 @@ namespace Helpers
             return true;
         }
 
+        public static async Task<bool> excuteSQLCommandAsync(string sql, List<OraclePara> _params)
+        {
+            using (OracleCommand command = _con.CreateCommand())
+            {
+                command.Connection = _con;
+                command.CommandText = sql;
+
+                // Gán tham số
+                for (int i = 0; i < _params.Count; i++)
+                {
+                    OracleParameter param = new OracleParameter();
+                    param.ParameterName = ":p" + i;
+
+                    if (_params[i].type.HasValue)
+                    {
+                        param.OracleDbType = _params[i].type.Value;
+                    }
+
+                    param.Value = _params[i].value ?? DBNull.Value;
+
+                    // Nếu là BLOB và dữ liệu là byte[], đặt size rõ ràng
+                    if (param.OracleDbType == OracleDbType.Blob && param.Value is byte[] blobData)
+                    {
+                        param.Size = blobData.Length;
+                    }
+
+                    command.Parameters.Add(param);
+                }
+
+                try
+                {
+                    await command.ExecuteNonQueryAsync();
+                    return true;
+                }
+                catch (Exception e)
+                {
+                    string err = e.Message;
+                    LogController.Error("excuteSQLCommandAsync: " + sql + ": " + err, true);
+                    return false;
+                }
+            }
+        }
+
         public static async Task<bool> excuteSQLCommandBatchAsync(List<string> listSQL)
         {
             using (OracleTransaction transaction = _con.BeginTransaction())
@@ -399,5 +442,11 @@ namespace Helpers
         {
             DelegateController.WriteInformation(message, false, tag);
         }
+    }
+
+    public struct OraclePara
+    {
+        public object value;
+        public OracleDbType? type;
     }
 }

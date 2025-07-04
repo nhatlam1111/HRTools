@@ -1,16 +1,13 @@
 ﻿using HRImportData.Classes;
 using HRImportData.Forms;
+using Helpers;
 using NPOI.XSSF.UserModel;
 using Oracle.ManagedDataAccess.Client;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static HRImportData.Controllers.MainController;
-using static System.Windows.Forms.Design.AxImporter;
+using Helpers.classes;
+using System.ComponentModel;
+using Helpers.controllers;
 
 namespace HRImportData.Controllers
 {
@@ -40,6 +37,9 @@ namespace HRImportData.Controllers
             } 
         }
 
+        public static readonly string referenceFunctionPath = $"{AppDomain.CurrentDomain.BaseDirectory}\\referencefunction.dat";
+        public static BindingList<ReferenceFunction> referenceFunctions = new BindingList<ReferenceFunction>();
+
         public static void Init()
         {
             DatabaseColumns = new List<DatabaseColumn>();
@@ -49,12 +49,28 @@ namespace HRImportData.Controllers
             ExcelWorkSheetStartRowImport = 0;
             TableImport = "";
 
+            InitReferenceFunction();
+
             dtColumnMapping = new DataTable();
             dtColumnMapping.Columns.Add("Excel", typeof(string));
             dtColumnMapping.Columns.Add("Database", typeof(string));
             dtColumnMapping.Columns.Add("DBMapping", typeof(bool));
             dtColumnMapping.Columns.Add("Type", typeof(OracleDbType));
+            dtColumnMapping.Columns.Add("Reference", typeof(string));
             dtColumnMapping.Columns.Add("Description", typeof(string));
+        }
+
+        public static void InitReferenceFunction()
+        {
+            if (File.Exists(referenceFunctionPath))
+            {
+                var listTmp = Helper.ReadListObjectFromFile<ReferenceFunction>(referenceFunctionPath);
+                referenceFunctions = new BindingList<ReferenceFunction>(listTmp);
+            }
+            else
+            {
+                referenceFunctions = new BindingList<ReferenceFunction>();
+            }
         }
 
         public static void Release()
@@ -93,7 +109,7 @@ namespace HRImportData.Controllers
                     break;
                 case IMPORT_TYPE.INSERT_TABLE:
                 case IMPORT_TYPE.UPDATE_TABLE:
-                    tableImports = await DatabaseHelper.GetTables();
+                    tableImports = await OracleDb.GetTables();
                     tableImports.Insert(0, new DatabaseTable() { table_name = "", columns = new List<DatabaseColumn>() });
                     break;
             }
@@ -103,7 +119,7 @@ namespace HRImportData.Controllers
 
         public static async Task GetTableColumns()
         {
-            DatabaseColumns = await DatabaseHelper.GetTableColumns(TableImport);
+            DatabaseColumns = await OracleDb.GetTableColumns(TableImport);
         }
 
 
@@ -131,12 +147,14 @@ namespace HRImportData.Controllers
             await WriteInformation($"Begin Export Data: {ImportController.TableImport}", true);
             string sqlBackup = string.Format(SQLTemplates.ORACLE_SELECT_BACKUP_DB_TABLE, TableImport);
 
-            DataTable dtBackup = await DatabaseHelper.excuteSQLAsync(sqlBackup);
+            DataTable dtBackup = await OracleDb.excuteSQLAsync(sqlBackup);
             string saveBackup = "";
 
             using (XSSFWorkbook wb = ExcelController.DataTableToWorkbook(dtBackup))
             {
                 saveBackup = MainController.SaveWorkbook(wb, $"export_{TableImport.ToLower()}_{DateTime.Now:yyyyMMdd_HHmmss}");
+                
+                MessageBox.Show($"Exported data to file: {saveBackup}", "Export Data", MessageBoxButtons.OK, MessageBoxIcon.Information);
             } // Ensures wb.Dispose() is called
 
             // Release DataTable memory
@@ -145,35 +163,49 @@ namespace HRImportData.Controllers
 
             await WriteInformation($"End Export Data: {ImportController.TableImport}", true);
 
-            /*if (!string.IsNullOrEmpty(saveBackup))
-            {
-                DialogResult result = MessageBox.Show(
-                    "Do you want to open the saved file?",
-                    "Open File",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Question
-                );
-
-                if (result == DialogResult.Yes)
-                {
-                    try
-                    {
-                        Process.Start(new ProcessStartInfo
-                        {
-                            FileName = saveBackup,
-                            UseShellExecute = true
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Error opening file: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-            }*/
-
             // Force memory release
             MainController.ReleaseMemory();
             return !string.IsNullOrEmpty(saveBackup);
+        }
+
+        public static bool ValidateBeforeImport()
+        { 
+            if(ExcelWorkSheetStartRowImport <= 0)
+            {
+                MessageBox.Show("Start row for import must be greater than 0", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            if (ExcelWorkSheetProcessing == null || ExcelWorkSheetProcessing.datas == null || ExcelWorkSheetProcessing?.datas?.Rows?.Count == 0)
+            {
+                MessageBox.Show("No data found in the worksheet", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            var dtColumnMappingLinq = dtColumnMapping.AsEnumerable();
+            var importColumns = dtColumnMappingLinq
+                .Where(q => !string.IsNullOrEmpty(q["Database"] + ""))
+                .ToList();
+
+            if (importColumns.Count == 0)
+            {
+                MessageBox.Show("No columns mapped to database found", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            if(ImportTypeStr == "UPDATE" && !importColumns.Any(q => !string.IsNullOrEmpty(q["DBMapping"] + "") && (bool)q["DBMapping"]))
+            {
+                MessageBox.Show("No [DBMapping] column found for UPDATE operation", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            if(ImportTypeStr == "INSERT" && importColumns.Any(q => !string.IsNullOrEmpty(q["DBMapping"] + "") && (bool)q["DBMapping"]))
+            {
+                MessageBox.Show("INSERT operation doesn't need [DBMapping] column", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            return true;
         }
 
         private static async Task<bool> ValidateImportData(DataTable dtColumnMapping, List<DataRow> importDatas, ValidateFromControllerDelegate validateFromController, ValidateOption options)
@@ -207,6 +239,8 @@ namespace HRImportData.Controllers
                     var groupDuplicated = importDatas
                         .GroupBy(g => g, new Classes.DataRowComparer(DBMappingColumns))
                         .Where(q => q.Count() > 1);
+
+                    var aaa = groupDuplicated.ToList();
 
                     if (groupDuplicated.Count() > 0)
                     {
@@ -321,7 +355,7 @@ namespace HRImportData.Controllers
             var excelData = ExcelWorkSheetProcessing.datas;
             ExcelWorkSheetDataImport = excelData.AsEnumerable().ToList();
             ExcelWorkSheetDataImport.RemoveRange(0, ExcelWorkSheetStartRowImport - 1);
-            var triggers = await DatabaseHelper.GetTableTriggers(TableImport);
+            var triggers = await OracleDb.GetTableTriggers(TableImport);
 
             ValidateFromControllerDelegate validateTemplate = null;
             switch (ImportType)
@@ -363,7 +397,7 @@ namespace HRImportData.Controllers
 
                     if (triggers.Count > 0)
                     {
-                        await DatabaseHelper.DisableTrigger(triggers);
+                        await OracleDb.DisableTrigger(triggers);
                     }
                 }
 
@@ -386,7 +420,7 @@ namespace HRImportData.Controllers
 
                     if (triggers.Count > 0)
                     {
-                        await DatabaseHelper.EnableTrigger(triggers);
+                        await OracleDb.EnableTrigger(triggers);
                     }
                 }
             }
@@ -432,7 +466,7 @@ namespace HRImportData.Controllers
             List<string> listSQL = new List<string>();
 
             //generate table vloopkup
-            await DatabaseHelper.excuteSQLCommandAsync(sqlDBMappingTableCreate);
+            await OracleDb.excuteSQLCommandAsync(sqlDBMappingTableCreate);
 
             /*==============================================
              //insert from excel to DBMapping table
@@ -445,7 +479,26 @@ namespace HRImportData.Controllers
                 List<string> tempValues = new List<string>();
                 foreach (var col in tempDBMappingColumn)
                 {
-                    tempValues.Add($"'{data[col.excel_mapping]}'");
+                    var excelValue = data[col.excel_mapping];
+                    if (!string.IsNullOrEmpty(col.sql_reference))
+                    {
+                        string _sql = col.sql_reference.Replace("$[value]", excelValue + "");
+                        var _dt = await OracleDb.excuteSQLAsync(_sql);
+                        if (_dt != null && _dt.Rows.Count > 0)
+                        {
+                            excelValue = _dt.Rows[0][0] + "";
+                        }
+                        else
+                        {
+                            excelValue = ""; //default value if sql reference not return any value
+                        }
+
+                        tempValues.Add($"'{excelValue}'");
+                    }
+                    else
+                    {
+                        tempValues.Add($"'{data[col.excel_mapping]}'");
+                    }
                 }
                 values = string.Join(",", tempValues);
 
@@ -454,7 +507,7 @@ namespace HRImportData.Controllers
 
             Task insertTask = new Task(async () =>
             {
-                valid = await DatabaseHelper.excuteSQLCommandBatchAsync(listSQL);
+                valid = await OracleDb.excuteSQLCommandBatchAsync(listSQL);
             });
             insertTask.Start();
             await insertTask;
@@ -482,7 +535,7 @@ namespace HRImportData.Controllers
 
                 string sqlBackup = string.Format(SQLTemplates.ORACLE_SELECT_BACKUP_DB_DATA, selectColumn, selectFrom, selectWhere);
 
-                DataTable dtBackup = await DatabaseHelper.excuteSQLAsync(sqlBackup);
+                DataTable dtBackup = await OracleDb.excuteSQLAsync(sqlBackup);
 
                 XSSFWorkbook wb = ExcelController.DataTableToWorkbook(dtBackup);
                 string saveBackup = MainController.SaveWorkbook(wb, $"backup_salary_{DateTime.Now.ToString("yyyyMMdd_HHmmss")}");
@@ -499,7 +552,7 @@ namespace HRImportData.Controllers
              //END - Get data backup from db
              ==============================================*/
 
-            await DatabaseHelper.excuteSQLCommandAsync(sqlDBMappingTableDrop);
+            await OracleDb.excuteSQLCommandAsync(sqlDBMappingTableDrop);
             return valid;
         }
 
@@ -529,27 +582,51 @@ namespace HRImportData.Controllers
 
                 foreach (var col in tempDBMappingColumn)
                 {
-                    tempValuesDBMapping.Add($"'{data[col.excel_mapping]}'");
+                    var excelValue = data[col.excel_mapping];
+                    if (!string.IsNullOrEmpty(col.sql_reference))
+                    {
+                        string _sql = col.sql_reference.Replace("$[value]", excelValue + "");
+                        var _dt = await OracleDb.excuteSQLAsync(_sql);
+                        if (_dt != null && _dt.Rows.Count > 0)
+                        {
+                            excelValue = _dt.Rows[0][0] + "";
+                        }
+                        else
+                        {
+                            excelValue = ""; //default value if sql reference not return any value
+                        }
+
+                        tempValuesDBMapping.Add($"'{excelValue}'");
+                    }
+                    else
+                    {
+                        tempValuesDBMapping.Add($"'{data[col.excel_mapping]}'");
+                    }
                 }
 
 
                 foreach (var col in tempImportColumn)
                 {
-                    if (col.column_type_name != "number")
+                    var excelValue = data[col.excel_mapping];
+                    if (!string.IsNullOrEmpty(col.sql_reference))
                     {
-                        tempColumnValue.Add($"{col.column_name} = '{data[col.excel_mapping]}'");
+                        string _sql = $"({col.sql_reference.Replace("$[value]", excelValue + "")})";
+                        tempColumnValue.Add($"{col.column_name} = {_sql}");
                     }
                     else
                     {
-                        tempColumnValue.Add($"{col.column_name} = {((data[col.excel_mapping] == null || data[col.excel_mapping] == DBNull.Value || data[col.excel_mapping] + "" == "")
-                            ? "''"
-                            : data[col.excel_mapping])}"
-                        );
+                        if (col.column_type_name != "number")
+                        {
+                            tempColumnValue.Add($"{col.column_name} = '{excelValue}'");
+                        }
+                        else
+                        {
+                            tempColumnValue.Add($"{col.column_name} = {((excelValue == null || excelValue == DBNull.Value || excelValue + "" == "") ? "''" : excelValue)}");
+                        }
                     }
-
                 }
 
-                tempColumnValue.Add($"mod_by = '{DatabaseHelper.site_user_name}'");
+                tempColumnValue.Add($"mod_by = '{currentLogin.SiteUserName}'");
                 tempColumnValue.Add($"mod_dt = to_date('{dtImport.ToString("yyyyMMddHHmmss")}', 'yyyymmddhh24miss')");
 
                 string valueDBMapping = string.Join(",", tempValuesDBMapping);
@@ -562,7 +639,7 @@ namespace HRImportData.Controllers
 
             Task ImportTask = new Task(async () =>
             {
-                await DatabaseHelper.excuteSQLCommandBatchAsync(listSQL);
+                await OracleDb.excuteSQLCommandBatchAsync(listSQL);
             });
             ImportTask.Start();
             await ImportTask;
@@ -580,11 +657,24 @@ namespace HRImportData.Controllers
                 .ToList();
 
             var tempImportColumn = DatabaseColumn.ToList(importColumns);
-            tempImportColumn.InsertRange(0, new List<DatabaseColumn>() {
-                new DatabaseColumn() { column_name = "PK", column_type = OracleDbType.Double },
-                new DatabaseColumn() { column_name = "CRT_DT", column_type = OracleDbType.Date },
-                new DatabaseColumn() { column_name = "CRT_BY", column_type = OracleDbType.Varchar2 }
-            });
+
+            //default columns
+            if (DatabaseColumns.Any(q => q.column_name == "PK"))
+            {
+                tempImportColumn.Add(new DatabaseColumn() { column_name = "PK", column_type = OracleDbType.Double });
+            }
+
+            if (DatabaseColumns.Any(q => q.column_name == "CRT_DT"))
+            {
+                tempImportColumn.Add(new DatabaseColumn() { column_name = "CRT_DT", column_type = OracleDbType.Date });
+            }
+
+            if (DatabaseColumns.Any(q => q.column_name == "CRT_DT"))
+            {
+                tempImportColumn.Add(new DatabaseColumn() { column_name = "CRT_BY", column_type = OracleDbType.Varchar2 });
+            }
+
+            //end default columns
 
             foreach (var data in ExcelWorkSheetDataImport)
             {
@@ -607,19 +697,37 @@ namespace HRImportData.Controllers
 
                     if (col.column_name == "CRT_BY")
                     {
-                        tempColumnValue.Add($"'{DatabaseHelper.site_user_name}'");
+                        tempColumnValue.Add($"'{currentLogin.SiteUserName}'");
                         continue;
                     }
 
-                    if (col.column_type_name != "number")
+                    var excelValue = data[col.excel_mapping];
+                    if (!string.IsNullOrEmpty(col.sql_reference))
                     {
-                        tempColumnValue.Add($"'{data[col.excel_mapping]}'");
+                        string _sql = col.sql_reference.Replace("$[value]", excelValue + "");
+                        var _dt = await OracleDb.excuteSQLAsync(_sql);
+                        if (_dt != null && _dt.Rows.Count > 0)
+                        {
+                            excelValue = _dt.Rows[0][0] + "";
+                        }
+                        else
+                        {
+                            excelValue = ""; //default value if sql reference not return any value
+                        }
+
+                        tempColumnValue.Add($"'{excelValue}'");
                     }
                     else
                     {
-                        tempColumnValue.Add($"{data[col.excel_mapping]}");
+                        if (col.column_type_name != "number")
+                        {
+                            tempColumnValue.Add($"'{data[col.excel_mapping]}'");
+                        }
+                        else
+                        {
+                            tempColumnValue.Add($"{data[col.excel_mapping]}");
+                        }
                     }
-
                 }
 
 
@@ -633,7 +741,7 @@ namespace HRImportData.Controllers
 
             Task importTask = new Task(async () =>
             {
-                valid = await DatabaseHelper.excuteSQLCommandBatchAsync(listSQL);
+                valid = await OracleDb.excuteSQLCommandBatchAsync(listSQL);
             });
 
             importTask.Start();

@@ -22,76 +22,136 @@ namespace Helpers.controllers
                 .CreateLogger();
         }
 
-        public static async void Information(string messageTemplate)
+        public static void Information(string messageTemplate)
         { 
             Log.Information(messageTemplate);
             if(DisplayForm != null && DisplayText != null) ThreadController.SetText(DisplayForm, DisplayText, messageTemplate);
         }
 
-        public static async void Information<T>(string messageTemplate, T propertyValue)
+        public static void Information<T>(string messageTemplate, T propertyValue)
         {
             Log.Information(messageTemplate, propertyValue);
             if (DisplayForm != null && DisplayText != null) ThreadController.SetText(DisplayForm, DisplayText, messageTemplate);
         }
 
-        public static async void Information(string messageTemplate, bool writeToLogFile)
+        public static void Information(string messageTemplate, bool writeToLogFile)
         {
             if (writeToLogFile) Log.Information(messageTemplate);
             if (DisplayForm != null && DisplayText != null) ThreadController.SetText(DisplayForm, DisplayText, messageTemplate);
         }
 
-        public static async void Information<T>(string messageTemplate, T propertyValue, bool writeToLogFile)
+        public static void Information<T>(string messageTemplate, T propertyValue, bool writeToLogFile)
         {
             if(writeToLogFile) Log.Information(messageTemplate, propertyValue);
             if (DisplayForm != null && DisplayText != null) ThreadController.SetText(DisplayForm, DisplayText, messageTemplate);
         }
 
-        public static async void Error(string messageTemplate)
+        public static void InformationBackground(string messageTemplate)
+        {
+            Log.Information(messageTemplate);
+        }
+
+        public static void InformationBackground<T>(string messageTemplate, T propertyValue)
+        {
+            Log.Information(messageTemplate, propertyValue);
+        }
+
+        public static void InformationBackground(string messageTemplate, bool writeToLogFile)
+        {
+            if (writeToLogFile) Log.Information(messageTemplate);
+        }
+
+        public static void InformationBackground<T>(string messageTemplate, T propertyValue, bool writeToLogFile)
+        {
+            if (writeToLogFile) Log.Information(messageTemplate, propertyValue);
+        }
+
+        public static void Error(string messageTemplate)
         {
             Log.Error(messageTemplate);
             if (DisplayForm != null && DisplayText != null) ThreadController.SetText(DisplayForm, DisplayText, messageTemplate);
         }
 
-        public static async void Error<T>(string messageTemplate, T propertyValue)
+        public static void Error<T>(string messageTemplate, T propertyValue)
         {
             Log.Error(messageTemplate, propertyValue);
             if (DisplayForm != null && DisplayText != null) ThreadController.SetText(DisplayForm, DisplayText, messageTemplate);
         }
 
-        public static async void Error(string messageTemplate, bool writeToLogFile)
+        public static void Error(string messageTemplate, bool writeToLogFile)
         {
             if (writeToLogFile) Log.Error(messageTemplate);
             if (DisplayForm != null && DisplayText != null) ThreadController.SetText(DisplayForm, DisplayText, messageTemplate);
         }
 
-        public static async void Error<T>(string messageTemplate, T propertyValue, bool writeToLogFile)
+        public static void Error<T>(string messageTemplate, T propertyValue, bool writeToLogFile)
         {
             if (writeToLogFile) Log.Error(messageTemplate, propertyValue);
             if (DisplayForm != null && DisplayText != null) ThreadController.SetText(DisplayForm, DisplayText, messageTemplate);
         }
 
-        public static async void Warning(string messageTemplate)
+        public static void ErrorBackground(string messageTemplate)
+        {
+            Log.Error(messageTemplate);
+        }
+
+        public static void ErrorBackground<T>(string messageTemplate, T propertyValue)
+        {
+            Log.Error(messageTemplate, propertyValue);
+        }
+
+        public static void ErrorBackground(string messageTemplate, bool writeToLogFile)
+        {
+            if (writeToLogFile) Log.Error(messageTemplate);
+        }
+
+        public static void ErrorBackground<T>(string messageTemplate, T propertyValue, bool writeToLogFile)
+        {
+            if (writeToLogFile) Log.Error(messageTemplate, propertyValue);
+        }
+
+        public static void Warning(string messageTemplate)
         {
             Log.Warning(messageTemplate);
             if (DisplayForm != null && DisplayText != null) ThreadController.SetText(DisplayForm, DisplayText, messageTemplate);
         }
 
-        public static async void Warning<T>(string messageTemplate, T propertyValue)
+        public static void Warning<T>(string messageTemplate, T propertyValue)
         {
             Log.Warning(messageTemplate, propertyValue);
             if (DisplayForm != null && DisplayText != null) ThreadController.SetText(DisplayForm, DisplayText, messageTemplate);
         }
 
-        public static async void Warning(string messageTemplate, bool writeToLogFile)
+        public static void Warning(string messageTemplate, bool writeToLogFile)
         {
             if (writeToLogFile) Log.Warning(messageTemplate);
             if (DisplayForm != null && DisplayText != null) ThreadController.SetText(DisplayForm, DisplayText, messageTemplate);
         }
 
-        public static async void Warning<T>(string messageTemplate, T propertyValue, bool writeToLogFile)
+        public static void Warning<T>(string messageTemplate, T propertyValue, bool writeToLogFile)
         {
             if (writeToLogFile) Log.Warning(messageTemplate, propertyValue);
             if (DisplayForm != null && DisplayText != null) ThreadController.SetText(DisplayForm, DisplayText, messageTemplate);
+        }
+
+        public static void WarningBackground(string messageTemplate)
+        {
+            Log.Warning(messageTemplate);
+        }
+
+        public static void WarningBackground<T>(string messageTemplate, T propertyValue)
+        {
+            Log.Warning(messageTemplate, propertyValue);
+        }
+
+        public static void WarningBackground(string messageTemplate, bool writeToLogFile)
+        {
+            if (writeToLogFile) Log.Warning(messageTemplate);
+        }
+
+        public static void WarningBackground<T>(string messageTemplate, T propertyValue, bool writeToLogFile)
+        {
+            if (writeToLogFile) Log.Warning(messageTemplate, propertyValue);
         }
     }
 }

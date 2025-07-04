@@ -508,5 +508,202 @@ namespace Helpers
 
             return result.ToString();
         }
+
+        public static string RemoveSpecialCharacters(string str)
+        {
+            return Regex.Replace(str, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
+        }
+
+        /// <summary>
+        /// Ghi danh sách đối tượng xuống file với mỗi đối tượng cách nhau bởi dấu phân cách và mã hóa nội dung
+        /// </summary>
+        /// <typeparam name="T">Kiểu của đối tượng cần ghi</typeparam>
+        /// <param name="list">Danh sách đối tượng cần ghi</param>
+        /// <param name="filePath">Đường dẫn đến file</param>
+        /// <param name="isEncrypted">Có mã hóa file hay không</param>
+        public static void WriteListObjectToFile<T>(List<T> list, string filePath, bool isEncrypted = true)
+        {
+            try
+            {
+                // Tạo nội dung từ danh sách đối tượng
+                StringBuilder contentBuilder = new StringBuilder();
+
+                // Lấy tất cả các thuộc tính public của đối tượng
+                PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+                foreach (T obj in list)
+                {
+                    // Ghi từng thuộc tính của đối tượng
+                    foreach (PropertyInfo property in properties)
+                    {
+                        // Lấy giá trị của thuộc tính
+                        object value = property.GetValue(obj);
+                        string valueString = value?.ToString() ?? string.Empty;
+
+                        // Ghi theo format: [tên_thuộc_tính]=
+                        contentBuilder.AppendLine($"[{property.Name}]=");
+
+                        // Ghi giá trị (có thể nhiều dòng) và kết thúc bằng dấu chấm phẩy
+                        contentBuilder.AppendLine($"{valueString};");
+                    }
+
+                    // Thêm dấu phân cách giữa các đối tượng
+                    contentBuilder.AppendLine("---OBJECT_SEPARATOR---");
+                }
+
+                string finalContent = contentBuilder.ToString();
+
+                // Mã hóa nội dung nếu cần
+                if (isEncrypted)
+                {
+                    finalContent = EncryptionHelper.Encrypt(finalContent, true);
+                }
+
+                // Ghi file
+                File.WriteAllText(filePath, finalContent);
+
+                Console.WriteLine($"Đã ghi {list.Count} đối tượng vào file thành công: {filePath}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi ghi file: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Đọc file và chuyển đổi nội dung thành danh sách đối tượng
+        /// </summary>
+        /// <typeparam name="T">Kiểu của đối tượng cần đọc</typeparam>
+        /// <param name="filePath">Đường dẫn đến file</param>
+        /// <param name="isEncrypted">File có được mã hóa hay không</param>
+        /// <returns>Danh sách đối tượng được khôi phục từ file</returns>
+        public static List<T> ReadListObjectFromFile<T>(string filePath, bool isEncrypted = true) where T : new()
+        {
+            try
+            {
+                // Đọc nội dung file
+                string fileContent = File.ReadAllText(filePath);
+                string decryptedContent = fileContent;
+
+                if (isEncrypted)
+                {
+                    // Giải mã nội dung
+                    decryptedContent = EncryptionHelper.Decrypt(fileContent, true);
+                }
+
+                List<T> resultList = new List<T>();
+
+                // Tách nội dung theo dấu phân cách đối tượng
+                string[] objectSections = decryptedContent.Split(new[] { "---OBJECT_SEPARATOR---" }, StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (string objectSection in objectSections)
+                {
+                    if (string.IsNullOrWhiteSpace(objectSection)) continue;
+
+                    // Tạo đối tượng mới từ section
+                    T obj = ParseObjectFromSection<T>(objectSection.Trim());
+                    if (obj != null)
+                    {
+                        resultList.Add(obj);
+                    }
+                }
+
+                Console.WriteLine($"Đã đọc {resultList.Count} đối tượng từ file thành công: {filePath}");
+                return resultList;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi đọc file: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Phân tích một section và tạo đối tượng từ nó
+        /// </summary>
+        /// <typeparam name="T">Kiểu của đối tượng</typeparam>
+        /// <param name="section">Nội dung section chứa thông tin đối tượng</param>
+        /// <returns>Đối tượng được tạo từ section</returns>
+        private static T ParseObjectFromSection<T>(string section) where T : new()
+        {
+            try
+            {
+                // Khởi tạo đối tượng mới
+                T obj = new T();
+
+                // Đọc từng dòng trong section
+                string[] lines = section.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+
+                string currentPropertyName = null;
+                StringBuilder currentValueBuilder = new StringBuilder();
+
+                foreach (string line in lines)
+                {
+                    // Kiểm tra xem dòng có phải là dòng bắt đầu thuộc tính mới không
+                    if (line.StartsWith("[") && line.Contains("]="))
+                    {
+                        // Nếu đang xử lý thuộc tính trước đó, gán giá trị cho nó
+                        if (!string.IsNullOrEmpty(currentPropertyName))
+                        {
+                            SetPropertyValue(obj, currentPropertyName, currentValueBuilder.ToString());
+                        }
+
+                        // Bắt đầu thuộc tính mới
+                        int separatorIndex = line.IndexOf("]=");
+                        currentPropertyName = line.Substring(1, separatorIndex - 1);
+                        currentValueBuilder.Clear();
+
+                        // Nếu có nội dung sau dấu "]=" trên cùng dòng
+                        string remainingContent = line.Substring(separatorIndex + 2);
+                        if (!string.IsNullOrEmpty(remainingContent))
+                        {
+                            currentValueBuilder.AppendLine(remainingContent);
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(currentPropertyName))
+                    {
+                        // Kiểm tra xem dòng có kết thúc bằng dấu chấm phẩy không
+                        if (line.EndsWith(";"))
+                        {
+                            // Thêm nội dung (bỏ dấu chấm phẩy cuối) và kết thúc thuộc tính
+                            string lineContent = line.Substring(0, line.Length - 1);
+                            if (!string.IsNullOrEmpty(lineContent))
+                            {
+                                currentValueBuilder.AppendLine(lineContent);
+                            }
+
+                            // Gán giá trị cho thuộc tính
+                            SetPropertyValue(obj, currentPropertyName, currentValueBuilder.ToString());
+
+                            // Reset cho thuộc tính tiếp theo
+                            currentPropertyName = null;
+                            currentValueBuilder.Clear();
+                        }
+                        else
+                        {
+                            // Thêm dòng vào giá trị hiện tại
+                            currentValueBuilder.AppendLine(line);
+                        }
+                    }
+                }
+
+                // Xử lý thuộc tính cuối cùng nếu còn dang dở
+                if (!string.IsNullOrEmpty(currentPropertyName))
+                {
+                    SetPropertyValue(obj, currentPropertyName, currentValueBuilder.ToString());
+                }
+
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi phân tích section: {ex.Message}");
+                return default(T);
+            }
+        }
+
+
+
     }
 }

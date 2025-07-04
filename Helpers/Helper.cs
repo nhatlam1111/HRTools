@@ -2,6 +2,7 @@
 using Serilog.Core;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
@@ -170,7 +171,7 @@ namespace Helpers
 
 
         /// <summary>
-        /// Ghi đối tượng xuống file với mỗi thuộc tính trên một dòng và mã hóa nội dung
+        /// Ghi đối tượng xuống file với mỗi thuộc tính trên nhiều dòng kết thúc thuộc tính là dòng chứa dấu chấm phẩy cuối cùng và mã hóa nội dung
         /// </summary>
         /// <typeparam name="T">Kiểu của đối tượng cần ghi</typeparam>
         /// <param name="obj">Đối tượng cần ghi</param>
@@ -191,8 +192,11 @@ namespace Helpers
                     object value = property.GetValue(obj);
                     string valueString = value?.ToString() ?? string.Empty;
 
-                    // Thêm vào định dạng [tên_thuộc_tính]=[giá_trị]
-                    contentBuilder.AppendLine($"[{property.Name}]={valueString}");
+                    // Ghi theo format: [tên_thuộc_tính]=
+                    contentBuilder.AppendLine($"[{property.Name}]=");
+
+                    // Ghi giá trị (có thể nhiều dòng) và kết thúc bằng dấu chấm phẩy
+                    contentBuilder.AppendLine($"{valueString};");
                 }
 
                 // Mã hóa nội dung
@@ -215,6 +219,7 @@ namespace Helpers
         /// </summary>
         /// <typeparam name="T">Kiểu của đối tượng cần đọc</typeparam>
         /// <param name="filePath">Đường dẫn đến file</param>
+        /// <param name="isEncrypted">File có được mã hóa hay không</param>
         /// <returns>Đối tượng được khôi phục từ file</returns>
         public static T ReadObjectFromFile<T>(string filePath, bool isEncrypted) where T : new()
         {
@@ -228,32 +233,70 @@ namespace Helpers
                     // Giải mã nội dung
                     decryptedContent = EncryptionHelper.Decrypt(encryptedContent, true);
                 }
-                    
+
                 // Khởi tạo đối tượng mới
                 T obj = new T();
 
                 // Đọc từng dòng
-                string[] lines = decryptedContent.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+                string[] lines = decryptedContent.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+
+                string currentPropertyName = null;
+                StringBuilder currentValueBuilder = new StringBuilder();
 
                 foreach (string line in lines)
                 {
-                    // Tìm vị trí của dấu "]=" để tách tên thuộc tính và giá trị
-                    int separatorIndex = line.IndexOf("]=");
-                    if (separatorIndex <= 1) continue; // Bỏ qua dòng không hợp lệ
+                    // Kiểm tra xem dòng có phải là dòng bắt đầu thuộc tính mới không
+                    if (line.StartsWith("[") && line.Contains("]="))
+                    {
+                        // Nếu đang xử lý thuộc tính trước đó, gán giá trị cho nó
+                        if (!string.IsNullOrEmpty(currentPropertyName))
+                        {
+                            SetPropertyValue(obj, currentPropertyName, currentValueBuilder.ToString());
+                        }
 
-                    // Tách tên thuộc tính (bỏ dấu "[" ở đầu)
-                    string propertyName = line.Substring(1, separatorIndex - 1);
+                        // Bắt đầu thuộc tính mới
+                        int separatorIndex = line.IndexOf("]=");
+                        currentPropertyName = line.Substring(1, separatorIndex - 1);
+                        currentValueBuilder.Clear();
 
-                    // Tách giá trị (sau "]=")
-                    string valueString = line.Substring(separatorIndex + 2);
+                        // Nếu có nội dung sau dấu "]=" trên cùng dòng
+                        string remainingContent = line.Substring(separatorIndex + 2);
+                        if (!string.IsNullOrEmpty(remainingContent))
+                        {
+                            currentValueBuilder.AppendLine(remainingContent);
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(currentPropertyName))
+                    {
+                        // Kiểm tra xem dòng có kết thúc bằng dấu chấm phẩy không
+                        if (line.EndsWith(";"))
+                        {
+                            // Thêm nội dung (bỏ dấu chấm phẩy cuối) và kết thúc thuộc tính
+                            string lineContent = line.Substring(0, line.Length - 1);
+                            if (!string.IsNullOrEmpty(lineContent))
+                            {
+                                currentValueBuilder.AppendLine(lineContent);
+                            }
 
-                    // Lấy thông tin thuộc tính
-                    PropertyInfo property = typeof(T).GetProperty(propertyName);
-                    if (property == null) continue; // Bỏ qua nếu không tìm thấy thuộc tính
+                            // Gán giá trị cho thuộc tính
+                            SetPropertyValue(obj, currentPropertyName, currentValueBuilder.ToString());
 
-                    // Chuyển đổi giá trị về đúng kiểu và gán cho thuộc tính
-                    object typedValue = ConvertToPropertyType(valueString, property.PropertyType);
-                    property.SetValue(obj, typedValue);
+                            // Reset cho thuộc tính tiếp theo
+                            currentPropertyName = null;
+                            currentValueBuilder.Clear();
+                        }
+                        else
+                        {
+                            // Thêm dòng vào giá trị hiện tại
+                            currentValueBuilder.AppendLine(line);
+                        }
+                    }
+                }
+
+                // Xử lý thuộc tính cuối cùng nếu còn dang dở
+                if (!string.IsNullOrEmpty(currentPropertyName))
+                {
+                    SetPropertyValue(obj, currentPropertyName, currentValueBuilder.ToString());
                 }
 
                 Console.WriteLine($"Đã đọc file thành công: {filePath}");
@@ -264,6 +307,23 @@ namespace Helpers
                 Console.WriteLine($"Lỗi khi đọc file: {ex.Message}");
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Gán giá trị cho thuộc tính của đối tượng
+        /// </summary>
+        private static void SetPropertyValue<T>(T obj, string propertyName, string valueString)
+        {
+            // Lấy thông tin thuộc tính
+            PropertyInfo property = typeof(T).GetProperty(propertyName);
+            if (property == null) return; // Bỏ qua nếu không tìm thấy thuộc tính
+
+            // Loại bỏ các dòng trống ở cuối và đầu
+            valueString = valueString.Trim();
+
+            // Chuyển đổi giá trị về đúng kiểu và gán cho thuộc tính
+            object typedValue = ConvertToPropertyType(valueString, property.PropertyType);
+            property.SetValue(obj, typedValue);
         }
 
         /// <summary>
@@ -291,7 +351,29 @@ namespace Helpers
             else if (targetType == typeof(DateTime) || targetType == typeof(DateTime?))
                 return DateTime.TryParse(value, out DateTime dateValue) ? dateValue : DateTime.MinValue;
             else if (targetType.IsEnum)
-                return Enum.TryParse(targetType, value, true, out object enumValue) ? enumValue : Activator.CreateInstance(targetType);
+            {
+                try
+                {
+                    // Cách 1: Parse qua tên enum
+                    return Enum.Parse(targetType, value, true);
+                }
+                catch
+                {
+                    try
+                    {
+                        // Cách 2: Parse qua giá trị số nguyên nếu cách 1 thất bại
+                        int enumValue;
+                        if (int.TryParse(value, out enumValue))
+                        {
+                            return Enum.ToObject(targetType, enumValue);
+                        }
+                    }
+                    catch { }
+
+                    // Trả về giá trị mặc định nếu không parse được
+                    return Activator.CreateInstance(targetType);
+                }
+            }
 
             // Thêm các kiểu dữ liệu khác nếu cần
 
@@ -313,6 +395,309 @@ namespace Helpers
             }
 
             return false;
+        }
+
+        public static void BindListToGrid<T>(BindingList<T> items, DataGridView grid, bool isreadonly)
+        {
+            bool isHaveImage = false;
+            // Clear existing columns
+            grid.Columns.Clear();
+
+            // Use reflection to get properties of T
+            var properties = typeof(T).GetProperties();
+
+            // Dynamically create columns based on property types
+            foreach (var property in properties)
+            {
+                DataGridViewColumn column;
+
+                // Determine column type based on property type
+                if (property.PropertyType == typeof(int) || property.PropertyType == typeof(long))
+                {
+                    column = new DataGridViewTextBoxColumn
+                    {
+                        ValueType = typeof(int),
+                        HeaderText = property.Name,
+                        DataPropertyName = property.Name,
+                        ReadOnly = isreadonly
+                    };
+                }
+                else if (property.PropertyType == typeof(string))
+                {
+                    column = new DataGridViewTextBoxColumn
+                    {
+                        ValueType = typeof(string),
+                        HeaderText = property.Name,
+                        DataPropertyName = property.Name,
+                        ReadOnly = isreadonly
+                    };
+                }
+                else if (property.PropertyType == typeof(bool))
+                {
+                    column = new DataGridViewCheckBoxColumn
+                    {
+                        ValueType = typeof(bool),
+                        HeaderText = property.Name,
+                        DataPropertyName = property.Name,
+                        ReadOnly = isreadonly
+                    };
+                }
+                else if (property.PropertyType == typeof(DateTime))
+                {
+                    column = new DataGridViewTextBoxColumn
+                    {
+                        ValueType = typeof(DateTime),
+                        HeaderText = property.Name,
+                        DataPropertyName = property.Name,
+                        ReadOnly = isreadonly
+                    };
+                }
+                else if (property.PropertyType == typeof(System.Drawing.Image))
+                {
+                    column = new DataGridViewImageColumn
+                    {
+                        ValueType = typeof(System.Drawing.Image),
+                        HeaderText = property.Name,
+                        DataPropertyName = property.Name,
+                        ReadOnly = isreadonly,
+                        ImageLayout = DataGridViewImageCellLayout.Zoom // Adjust image layout as needed
+                    };
+                    isHaveImage = true;
+                }
+                else
+                {
+                    // Default to text column for unsupported types
+                    column = new DataGridViewTextBoxColumn
+                    {
+                        ValueType = property.PropertyType,
+                        HeaderText = property.Name,
+                        DataPropertyName = property.Name,
+                        ReadOnly = isreadonly
+                    };
+                }
+
+                column.Width = 100;
+                grid.Columns.Add(column);
+            }
+
+            if (isHaveImage)
+            {
+                grid.RowTemplate.Height = 50; // Set row height for image display
+            }
+
+            // Set the data source of the DataGridView to the list of items
+            grid.DataSource = items;
+        }
+
+        public static string RandomString(int length)
+        {
+            if (length <= 0)
+                throw new ArgumentException("Length must be greater than 0.");
+
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            StringBuilder result = new StringBuilder(length);
+            Random random = new Random();
+
+            for (int i = 0; i < length; i++)
+            {
+                result.Append(chars[random.Next(chars.Length)]);
+            }
+
+            return result.ToString();
+        }
+
+        public static string RemoveSpecialCharacters(string str)
+        {
+            return Regex.Replace(str, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
+        }
+
+        /// <summary>
+        /// Ghi danh sách đối tượng xuống file với mỗi đối tượng cách nhau bởi dấu phân cách và mã hóa nội dung
+        /// </summary>
+        /// <typeparam name="T">Kiểu của đối tượng cần ghi</typeparam>
+        /// <param name="list">Danh sách đối tượng cần ghi</param>
+        /// <param name="filePath">Đường dẫn đến file</param>
+        /// <param name="isEncrypted">Có mã hóa file hay không</param>
+        public static void WriteListObjectToFile<T>(List<T> list, string filePath, bool isEncrypted = true)
+        {
+            try
+            {
+                // Tạo nội dung từ danh sách đối tượng
+                StringBuilder contentBuilder = new StringBuilder();
+
+                // Lấy tất cả các thuộc tính public của đối tượng
+                PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+                foreach (T obj in list)
+                {
+                    // Ghi từng thuộc tính của đối tượng
+                    foreach (PropertyInfo property in properties)
+                    {
+                        // Lấy giá trị của thuộc tính
+                        object value = property.GetValue(obj);
+                        string valueString = value?.ToString() ?? string.Empty;
+
+                        // Ghi theo format: [tên_thuộc_tính]=
+                        contentBuilder.AppendLine($"[{property.Name}]=");
+
+                        // Ghi giá trị (có thể nhiều dòng) và kết thúc bằng dấu chấm phẩy
+                        contentBuilder.AppendLine($"{valueString};");
+                    }
+
+                    // Thêm dấu phân cách giữa các đối tượng
+                    contentBuilder.AppendLine("---OBJECT_SEPARATOR---");
+                }
+
+                string finalContent = contentBuilder.ToString();
+
+                // Mã hóa nội dung nếu cần
+                if (isEncrypted)
+                {
+                    finalContent = EncryptionHelper.Encrypt(finalContent, true);
+                }
+
+                // Ghi file
+                File.WriteAllText(filePath, finalContent);
+
+                Console.WriteLine($"Đã ghi {list.Count} đối tượng vào file thành công: {filePath}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi ghi file: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Đọc file và chuyển đổi nội dung thành danh sách đối tượng
+        /// </summary>
+        /// <typeparam name="T">Kiểu của đối tượng cần đọc</typeparam>
+        /// <param name="filePath">Đường dẫn đến file</param>
+        /// <param name="isEncrypted">File có được mã hóa hay không</param>
+        /// <returns>Danh sách đối tượng được khôi phục từ file</returns>
+        public static List<T> ReadListObjectFromFile<T>(string filePath, bool isEncrypted = true) where T : new()
+        {
+            try
+            {
+                // Đọc nội dung file
+                string fileContent = File.ReadAllText(filePath);
+                string decryptedContent = fileContent;
+
+                if (isEncrypted)
+                {
+                    // Giải mã nội dung
+                    decryptedContent = EncryptionHelper.Decrypt(fileContent, true);
+                }
+
+                List<T> resultList = new List<T>();
+
+                // Tách nội dung theo dấu phân cách đối tượng
+                string[] objectSections = decryptedContent.Split(new[] { "---OBJECT_SEPARATOR---" }, StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (string objectSection in objectSections)
+                {
+                    if (string.IsNullOrWhiteSpace(objectSection)) continue;
+
+                    // Tạo đối tượng mới từ section
+                    T obj = ParseObjectFromSection<T>(objectSection.Trim());
+                    if (obj != null)
+                    {
+                        resultList.Add(obj);
+                    }
+                }
+
+                Console.WriteLine($"Đã đọc {resultList.Count} đối tượng từ file thành công: {filePath}");
+                return resultList;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi đọc file: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Phân tích một section và tạo đối tượng từ nó
+        /// </summary>
+        /// <typeparam name="T">Kiểu của đối tượng</typeparam>
+        /// <param name="section">Nội dung section chứa thông tin đối tượng</param>
+        /// <returns>Đối tượng được tạo từ section</returns>
+        private static T ParseObjectFromSection<T>(string section) where T : new()
+        {
+            try
+            {
+                // Khởi tạo đối tượng mới
+                T obj = new T();
+
+                // Đọc từng dòng trong section
+                string[] lines = section.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+
+                string currentPropertyName = null;
+                StringBuilder currentValueBuilder = new StringBuilder();
+
+                foreach (string line in lines)
+                {
+                    // Kiểm tra xem dòng có phải là dòng bắt đầu thuộc tính mới không
+                    if (line.StartsWith("[") && line.Contains("]="))
+                    {
+                        // Nếu đang xử lý thuộc tính trước đó, gán giá trị cho nó
+                        if (!string.IsNullOrEmpty(currentPropertyName))
+                        {
+                            SetPropertyValue(obj, currentPropertyName, currentValueBuilder.ToString());
+                        }
+
+                        // Bắt đầu thuộc tính mới
+                        int separatorIndex = line.IndexOf("]=");
+                        currentPropertyName = line.Substring(1, separatorIndex - 1);
+                        currentValueBuilder.Clear();
+
+                        // Nếu có nội dung sau dấu "]=" trên cùng dòng
+                        string remainingContent = line.Substring(separatorIndex + 2);
+                        if (!string.IsNullOrEmpty(remainingContent))
+                        {
+                            currentValueBuilder.AppendLine(remainingContent);
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(currentPropertyName))
+                    {
+                        // Kiểm tra xem dòng có kết thúc bằng dấu chấm phẩy không
+                        if (line.EndsWith(";"))
+                        {
+                            // Thêm nội dung (bỏ dấu chấm phẩy cuối) và kết thúc thuộc tính
+                            string lineContent = line.Substring(0, line.Length - 1);
+                            if (!string.IsNullOrEmpty(lineContent))
+                            {
+                                currentValueBuilder.AppendLine(lineContent);
+                            }
+
+                            // Gán giá trị cho thuộc tính
+                            SetPropertyValue(obj, currentPropertyName, currentValueBuilder.ToString());
+
+                            // Reset cho thuộc tính tiếp theo
+                            currentPropertyName = null;
+                            currentValueBuilder.Clear();
+                        }
+                        else
+                        {
+                            // Thêm dòng vào giá trị hiện tại
+                            currentValueBuilder.AppendLine(line);
+                        }
+                    }
+                }
+
+                // Xử lý thuộc tính cuối cùng nếu còn dang dở
+                if (!string.IsNullOrEmpty(currentPropertyName))
+                {
+                    SetPropertyValue(obj, currentPropertyName, currentValueBuilder.ToString());
+                }
+
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi phân tích section: {ex.Message}");
+                return default(T);
+            }
         }
     }
 }

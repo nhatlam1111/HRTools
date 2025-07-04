@@ -3,6 +3,8 @@ using HRImportData.Forms;
 using System.Data;
 using Oracle.ManagedDataAccess.Client;
 using NPOI.XSSF.UserModel;
+using Helpers;
+using Helpers.controllers;
 
 namespace HRImportData.Controllers
 {
@@ -36,6 +38,7 @@ namespace HRImportData.Controllers
             {IMPORT_TYPE.UPDATE_TABLE, "Update Table"}
         };
 
+
         public static void ReleaseMemory()
         {
             try
@@ -66,14 +69,14 @@ namespace HRImportData.Controllers
             con.Enabled = enable;
         }
 
-        public static async void CheckConnectDatabase()
-        {
-            isConnectDatabase = await DatabaseHelper.Connect();            
-        }
+        //public static async void CheckConnectDatabase()
+        //{
+        //    isConnectDatabase = await OracleDb.Connect();            
+        //}
 
         public static async void CheckConnectDatabase(string connectionString)
         {
-            isConnectDatabase = await DatabaseHelper.Connect(connectionString);
+            isConnectDatabase = await OracleDb.Connect(connectionString);
         }
 
 
@@ -89,7 +92,7 @@ namespace HRImportData.Controllers
 
             sql = string.Format(sql, loginInfo.SiteUserName, loginInfo.SiteUserPass);
 
-            var dt = await DatabaseHelper.excuteSQLAsync(sql);
+            var dt = await OracleDb.excuteSQLAsync(sql);
 
             if (dt != null && dt.Rows.Count > 0)
             {

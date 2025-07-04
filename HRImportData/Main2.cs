@@ -1,4 +1,6 @@
-﻿using HRImportData.Classes;
+﻿using Helpers;
+using Helpers.controllers;
+using HRImportData.Classes;
 using HRImportData.Controllers;
 using HRImportData.Forms;
 using System.Data;
@@ -13,7 +15,7 @@ namespace HRImportData
             InitializeComponent();
 
             ctrSiteVersion.SelectedItem = "GASP";
-            Helper.LoadLoginInfo();
+            AppHelper.LoadLoginInfo();
             Helper.LoadTnsFile();
 
             ctrClientSites.Items.Clear();
@@ -22,7 +24,7 @@ namespace HRImportData
             dgvSavedLogin.DataSource = null;
 
             var bindingSource = new BindingSource();
-            bindingSource.DataSource = Helper.loginInfos;
+            bindingSource.DataSource = AppHelper.loginInfos;
             dgvSavedLogin.DataSource = bindingSource;
 
             SetGridLogin();
@@ -105,7 +107,7 @@ namespace HRImportData
 
                 if (ctrRememberLogin.Checked)
                 {
-                    Helper.SaveLoginInfo(loginInfo);
+                    AppHelper.SaveLoginInfo(loginInfo);
                 }
 
 
@@ -113,12 +115,13 @@ namespace HRImportData
                 var importForm = new ImportMain();
                 this.Hide();
                 importForm.ShowDialog();
+                importForm.Icon = this.Icon;
                 this.Close();
             }
             else
             {
                 MessageBox.Show("Wrong user or password.", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                LogController.Error($"Wrong user or password. [{DatabaseHelper.site_user_name}]");
+                LogController.Error($"Wrong user or password. [{loginInfo.SiteUserName}]");
             }
         }
 
@@ -146,16 +149,12 @@ namespace HRImportData
                 return false;
             }
 
-            DatabaseHelper.site_user_name = ctrSiteUser.Text;
-            DatabaseHelper.site_user_pass = ctrSitePass.Text;
-            DatabaseHelper.site_version = (SITE_VERSION)ctrSiteVersion.SelectedIndex;
-
             return true;
         }
 
         private void Main2_FormClosing(object sender, FormClosingEventArgs e)
         {
-            LogController.Information("Logout: {0}", $"{DatabaseHelper.site_user_name}");
+            LogController.Information("Exit");
         }
 
         private void dgvSavedLogin_CellClick(object sender, DataGridViewCellEventArgs e)

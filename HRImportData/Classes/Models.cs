@@ -15,61 +15,61 @@ namespace HRImportData.Classes
         public string display { get; set; }
     }
 
-    public class DatabaseColumn
-    {
-        public string column_name { get; set; }
-        public OracleDbType column_type { get; set; }
-        public string column_type_name { get; set; }
-        public int column_type_size { get; set; }
-        public string column_description { get; set; }
-        public string excel_mapping { get; set; }
-        public bool condition_compare { get; set; }
+    //public class DatabaseColumn
+    //{
+    //    public string column_name { get; set; }
+    //    public OracleDbType column_type { get; set; }
+    //    public string column_type_name { get; set; }
+    //    public int column_type_size { get; set; }
+    //    public string column_description { get; set; }
+    //    public string excel_mapping { get; set; }
+    //    public bool condition_compare { get; set; }
 
-        public static List<DatabaseColumn> ToList(List<DataRow> columns)
-        {
-            List<DatabaseColumn> databaseColumns = new List<DatabaseColumn>();
+    //    public static List<DatabaseColumn> ToList(List<DataRow> columns)
+    //    {
+    //        List<DatabaseColumn> databaseColumns = new List<DatabaseColumn>();
 
-            foreach (var v in columns)
-            {
-                databaseColumns.Add(new DatabaseColumn()
-                {
-                    column_name = v["Database"] + "",
-                    column_type = (OracleDbType)v["Type"],
-                    column_type_name = DatabaseHelper.GetOracleDbTypeName((OracleDbType)v["Type"]),
-                    column_type_size = DatabaseHelper.GetOracleDbTypeName((OracleDbType)v["Type"]) == "varchar2" ? 4000 : 0,
-                    excel_mapping = v["Excel"] + ""
-                }); ;
-            }
+    //        foreach (var v in columns)
+    //        {
+    //            databaseColumns.Add(new DatabaseColumn()
+    //            {
+    //                column_name = v["Database"] + "",
+    //                column_type = (OracleDbType)v["Type"],
+    //                column_type_name = DatabaseHelper.GetOracleDbTypeName((OracleDbType)v["Type"]),
+    //                column_type_size = DatabaseHelper.GetOracleDbTypeName((OracleDbType)v["Type"]) == "varchar2" ? 4000 : 0,
+    //                excel_mapping = v["Excel"] + ""
+    //            }); ;
+    //        }
 
-            return databaseColumns;
-        }
-    }
+    //        return databaseColumns;
+    //    }
+    //}
 
-    public class DatabaseTable
-    {
-        public string table_name { get; set; }
-        public List<DatabaseColumn> columns { get; set; }
+    //public class DatabaseTable
+    //{
+    //    public string table_name { get; set; }
+    //    public List<DatabaseColumn> columns { get; set; }
 
-        public DatabaseTable()
-        {
-            columns = new List<DatabaseColumn>();
-        }
-    }
+    //    public DatabaseTable()
+    //    {
+    //        columns = new List<DatabaseColumn>();
+    //    }
+    //}
 
-    public class ExcelWorkbook
-    {
-        public XSSFWorkbook workBook { get; set; }
-        public string workBookPath { get; set; }  //path of workBook
-        public List<ExcelWorkSheet> workSheets { get; set; }
-    }
+    //public class ExcelWorkbook
+    //{
+    //    public XSSFWorkbook workBook { get; set; }
+    //    public string workBookPath { get; set; }  //path of workBook
+    //    public List<ExcelWorkSheet> workSheets { get; set; }
+    //}
 
-    public class ExcelWorkSheet
-    {
-        public int index { set; get; }
-        public string name { set; get; }
-        public ISheet sheet { get; set; }
-        public DataTable datas { get; set; }
-    }
+    //public class ExcelWorkSheet
+    //{
+    //    public int index { set; get; }
+    //    public string name { set; get; }
+    //    public ISheet sheet { get; set; }
+    //    public DataTable datas { get; set; }
+    //}
 
     public class ValidateOption
     {

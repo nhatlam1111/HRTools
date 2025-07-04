@@ -46,6 +46,7 @@
             ctrExcelSelectFile = new TextBox();
             label1 = new Label();
             groupBoxMapping = new GroupBox();
+            btnReferenceFunction = new Button();
             btnMappingResize = new Button();
             lblMappingRecord = new Label();
             gridColumnMapping = new DataGridView();
@@ -221,6 +222,7 @@
             // 
             // groupBoxMapping
             // 
+            groupBoxMapping.Controls.Add(btnReferenceFunction);
             groupBoxMapping.Controls.Add(btnMappingResize);
             groupBoxMapping.Controls.Add(lblMappingRecord);
             groupBoxMapping.Controls.Add(gridColumnMapping);
@@ -230,6 +232,16 @@
             groupBoxMapping.TabIndex = 1;
             groupBoxMapping.TabStop = false;
             groupBoxMapping.Text = "Column Mapping";
+            // 
+            // btnReferenceFunction
+            // 
+            btnReferenceFunction.Location = new Point(406, 15);
+            btnReferenceFunction.Name = "btnReferenceFunction";
+            btnReferenceFunction.Size = new Size(103, 42);
+            btnReferenceFunction.TabIndex = 15;
+            btnReferenceFunction.Text = "Reference Funtion(s)";
+            btnReferenceFunction.UseVisualStyleBackColor = true;
+            btnReferenceFunction.Click += btnReferenceFunction_Click;
             // 
             // btnMappingResize
             // 
@@ -293,7 +305,7 @@
             txtLastLog.Multiline = true;
             txtLastLog.Name = "txtLastLog";
             txtLastLog.ReadOnly = true;
-            txtLastLog.Size = new Size(794, 23);
+            txtLastLog.Size = new Size(794, 53);
             txtLastLog.TabIndex = 3;
             txtLastLog.Text = "-------------------";
             txtLastLog.TextAlign = HorizontalAlignment.Center;
@@ -418,5 +430,6 @@
         private ComboBox ctrTableImport;
         private Panel panelControls;
         private Button btnExport;
+        private Button btnReferenceFunction;
     }
 }
