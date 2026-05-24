@@ -47,6 +47,7 @@
             btnSelectSqlTemplate = new Button();
             xSqlTemplatePath = new TextBox();
             btnSaveFileConfig = new Button();
+            btnTestSqlConnect = new Button();
             xSyncEachMinutes = new TextBox();
             label8 = new Label();
             xSyncDays = new TextBox();
@@ -90,6 +91,7 @@
             groupConfig.Controls.Add(btnSelectSqlTemplate);
             groupConfig.Controls.Add(xSqlTemplatePath);
             groupConfig.Controls.Add(btnSaveFileConfig);
+            groupConfig.Controls.Add(btnTestSqlConnect);
             groupConfig.Controls.Add(xSyncEachMinutes);
             groupConfig.Controls.Add(label8);
             groupConfig.Controls.Add(xSyncDays);
@@ -248,6 +250,16 @@
             btnSaveFileConfig.Text = "Save";
             btnSaveFileConfig.UseVisualStyleBackColor = true;
             btnSaveFileConfig.Click += btnSaveFileConfig_Click;
+            // 
+            // btnTestSqlConnect
+            // 
+            btnTestSqlConnect.Location = new Point(100, 461);
+            btnTestSqlConnect.Name = "btnTestSqlConnect";
+            btnTestSqlConnect.Size = new Size(120, 23);
+            btnTestSqlConnect.TabIndex = 16;
+            btnTestSqlConnect.Text = "Test SQL Connect";
+            btnTestSqlConnect.UseVisualStyleBackColor = true;
+            btnTestSqlConnect.Click += btnTestSqlConnect_Click;
             // 
             // xSyncEachMinutes
             // 
@@ -486,6 +498,7 @@
         private Label label7;
         private Label label6;
         private Button btnSaveFileConfig;
+        private Button btnTestSqlConnect;
         private Panel panel1;
         private DataGridView gridMessage;
         private DataGridViewTextBoxColumn TIME;

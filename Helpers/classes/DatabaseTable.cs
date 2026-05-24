@@ -9,6 +9,7 @@ namespace Helpers.classes
     public class DatabaseTable
     {
         public string table_name { get; set; }
+        public DateTime create_time { get; set; }
         public List<DatabaseColumn> columns { get; set; }
 
         public DatabaseTable()

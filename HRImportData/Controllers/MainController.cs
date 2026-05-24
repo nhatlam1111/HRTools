@@ -10,14 +10,10 @@ namespace HRImportData.Controllers
 {
     internal static class MainController
     {
-        public delegate bool WriteErrorLogDelegate(string message, bool writeToLogFile);
-        public delegate Task WriteInformationMessageDelegate(string message, bool writeToLogFile);
         public delegate string SaveWorkbookDelegate(XSSFWorkbook workbook, string fileName);
 
 
 
-        public static WriteErrorLogDelegate WriteError = WriteErrorCallback;
-        public static WriteInformationMessageDelegate WriteInformation = WriteMessageCallback;
         public static SaveWorkbookDelegate SaveWorkbook = SaveAsWorkbook;
 
 
@@ -129,21 +125,19 @@ namespace HRImportData.Controllers
             return list;
         }
 
-        private static bool WriteErrorCallback(string message, bool writeToLogFile)
+        public static bool WriteError(string message, bool writeToLogFile)
         {
             LogController.Error(message, writeToLogFile);
             MessageBox.Show(message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return false;
         }
 
-        private static async Task WriteMessageCallback(string message, bool writeToLogFile)
+        public static void WriteInformation(string message, bool writeToLogFile)
         {
             if (CurrentFormProcessing == null) return;
 
             CurrentFormProcessing.SetMessage(message);
             LogController.Information(message, writeToLogFile);
-
-            await Task.Delay(100);
         }
 
         private static string SaveAsWorkbook(XSSFWorkbook workbook, string fileName)

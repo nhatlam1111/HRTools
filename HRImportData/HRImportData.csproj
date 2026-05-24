@@ -21,6 +21,8 @@
     <Compile Remove="Forms\frmImportSalary.Designer.cs" />
     <Compile Remove="Forms\frmImportTimeTemp.cs" />
     <Compile Remove="Forms\frmImportTimeTemp.Designer.cs" />
+    <Compile Remove="Forms\ImportDialogConfirm.cs" />
+    <Compile Remove="Forms\ImportDialogConfirm.Designer.cs" />
     <Compile Remove="Main.cs" />
     <Compile Remove="Main.Designer.cs" />
   </ItemGroup>
@@ -28,6 +30,7 @@
   <ItemGroup>
     <EmbeddedResource Remove="Forms\frmImportSalary.resx" />
     <EmbeddedResource Remove="Forms\frmImportTimeTemp.resx" />
+    <EmbeddedResource Remove="Forms\ImportDialogConfirm.resx" />
     <EmbeddedResource Remove="Main.resx" />
   </ItemGroup>
 

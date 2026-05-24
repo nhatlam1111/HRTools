@@ -17,6 +17,7 @@ namespace AttendanceAccessToOracle
             LogController.DisplayText = lblCurrentLog;
             MainController.mainForm = this;
             MainController.mainGridView = gridMessage;
+
         }
 
         private void Main_Load(object sender, EventArgs e)
@@ -26,14 +27,15 @@ namespace AttendanceAccessToOracle
             xClientList.Items.Clear();
             xClientList.Items.AddRange(new List<string>(Helper.clientList.Keys.OrderBy(q => q)).ToArray());
 
+
+            
             LoadConfig();
             LogController.Information("Application started.", true);
 
             if (MainController.config != null)
-            {
+            {                
                 btnStartStop_Click(null, null);
             }
-            
         }
 
         private void btnSaveFileConfig_Click(object sender, EventArgs e)
@@ -67,6 +69,7 @@ namespace AttendanceAccessToOracle
             {
                 if (!File.Exists(configFile))
                 {
+                    LogController.Information($"{configFile} not found", true);
                     return;
                 }
 

@@ -15,3 +15,9 @@ UnionApp/bin/
 UnionApp/obj/
 HelpersNetFramework/bin/
 UnionApp/SDK_UCS_ver4.7.2.1 + key/Setup/UCS SDK v4.exe
+AttendanceMariaDBToOracle/obj/
+SyncDataOracle/bin/
+AttendanceMariaDBToOracle/bin
+SyncDataOracle/obj/
+SyncTableOracle/obj/
+SyncDataSqlToWebApi/obj

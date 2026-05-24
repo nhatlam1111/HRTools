@@ -197,6 +197,41 @@ namespace AttendanceAccessToOracle
             xSqlTemplatePath.Text = path;
         }
 
+        private async void btnTestSqlConnect_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(xSqlHost.Text) || string.IsNullOrEmpty(xSqlPort.Text) ||
+                string.IsNullOrEmpty(xSqlDatabase.Text) || string.IsNullOrEmpty(xSqlUserName.Text) ||
+                string.IsNullOrEmpty(xSqlPassword.Text))
+            {
+                MessageBox.Show("Please enter SQL Server connection information.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            btnTestSqlConnect.Enabled = false;
+            btnTestSqlConnect.Text = "Testing...";
+            try
+            {
+                string connStr = AttendanceAccessToOracle.classes.SqlServerDb.connectionString
+                    .Replace("$[SqlHost]", $"{xSqlHost.Text},{xSqlPort.Text}")
+                    .Replace("$[SqlService]", xSqlDatabase.Text)
+                    .Replace("$[SqlUserName]", xSqlUserName.Text)
+                    .Replace("$[SqlPassword]", xSqlPassword.Text);
+
+                using var con = new Microsoft.Data.SqlClient.SqlConnection(connStr);
+                await con.OpenAsync();
+                MessageBox.Show("SQL Server connection successful!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Connection failed: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                btnTestSqlConnect.Enabled = true;
+                btnTestSqlConnect.Text = "Test SQL Connect";
+            }
+        }
+
         private void btnStartStop_Click(object sender, EventArgs e)
         {
             if (btnStartStop.Text == "Start")

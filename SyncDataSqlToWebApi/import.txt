@@ -1,0 +1,70 @@
+async onSave() {
+			this.$emit("importing");
+			let control = this.$refs.idGrid.getControl();
+			try {
+				this.onSetInterval();
+				this.isProcessing = true;
+				control.showloadelement();
+					
+				this.sequence = new Date().getTime();
+				let datas = this.$refs.idGrid.getDataDb();
+				let selectedDatas = datas?.filter(q => (q.CHECK_YN == true || q.CHECK_YN == 'Y') && q.VALID == 'Y' && q._rowstatus == 'i');
+				if(selectedDatas?.length > 0) {
+					let paras = [];
+					selectedDatas.forEach( q => {
+						let para = [];
+						this.paraInsertData.forEach(p => {
+							let val = q[p] || q[p] == 0 ? q[p] : '' ;
+							para.push(val);
+						});
+
+						if(this.sequenceYN == 'Y') {
+							para.push(this.sequence);
+						}
+
+						paras.push(para);
+					});
+
+					paras = lodash.chunk(paras, this.maxRowPerRequest);
+					let _idx = 0;
+					while(_idx < paras.length) {
+						let para = paras[_idx];
+
+						let results = await this.$axios.$post("dso/bulkinsertpro", { proc: this.proInsertValidData, para: para });
+						results = this.modifyBulkData(results);
+						if(results) {
+
+							for(let i = 0; i< datas.length; i++) {
+								let data = datas[i];
+								data._rowstatus = "";
+								let res = results.find(q => q.INDEX == data.INDEX);
+								if(res) {
+									Object.assign(data, res);
+								}
+							}
+						}
+
+						_idx++;
+					}
+
+					this.$refs.idGrid.setDataSource(datas);
+					
+
+					let exportResult = () => {
+						this.$refs.idGrid.myGridOnExport();
+					};
+					//await this.onProcessConfirm('EXPORT_RESULT', exportResult);
+					
+				} else {
+					this.showNotification("warning", this.$t("no_row_valid"));
+				}
+			} catch{
+
+			} finally{
+				this.onClearInterval();
+				this.isProcessing = false;
+				control.hideloadelement();
+				this.$emit("imported");
+				this.isDisabledSave = true;
+			}
+		},

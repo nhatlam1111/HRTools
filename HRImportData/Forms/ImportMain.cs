@@ -332,9 +332,7 @@ namespace HRImportData.Forms
                 return;
             }
 
-            string importTypeName = Enum.GetName(typeof(IMPORT_TYPE), ImportController.ImportType);
-
-            if (!string.IsNullOrEmpty(importTypeName))
+            if (!string.IsNullOrEmpty(ImportController.ImportTypeStr))
             {
                 ImportController.validateOption = new ValidateOption()
                 {
@@ -343,39 +341,37 @@ namespace HRImportData.Forms
                     validate_from_controller = false,
                 };
 
-                if (importTypeName.StartsWith("INSERT"))
+                if (ImportController.ImportTypeStr.StartsWith("INSERT"))
                 {
                     ImportController.validateOption.validate_dbmapping = false;
                     ImportController.validateOption.validate_dbmapping_data_duplicate = false;
 
                 }
 
-                if (importTypeName.StartsWith("UPDATE"))
+                if (ImportController.ImportTypeStr.StartsWith("UPDATE"))
                 {
                     ImportController.validateOption.validate_dbmapping = true;
                     ImportController.validateOption.validate_dbmapping_data_duplicate = true;
                     ImportController.validateOption.backup_data = true;
                 }
 
-                ImportDialogConfirm importDialogConfirm = new ImportDialogConfirm();
+                var confirmResult = MessageBox.Show("Do you want to import data?", "Confirm Import", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (confirmResult == DialogResult.Yes)
+                {
+                    await ImportController.ImportData();
+                }
+
+                /*ImportDialogConfirm importDialogConfirm = new ImportDialogConfirm();
 
                 DialogResult dialogResult = importDialogConfirm.ShowDialog();
 
                 if (dialogResult == DialogResult.OK)
                 {
                     await ImportController.ImportData();
-
-
-                }
+                }*/
 
             }
-
-
-
-
-
-            //await ImportController.ImportData();
-
         }
 
         private void ImportMain_FormClosed(object sender, FormClosedEventArgs e)
@@ -421,7 +417,7 @@ namespace HRImportData.Forms
 
         private void ctrTableImport_SelectedValueChanged(object sender, EventArgs e)
         {
-            btnExport.Enabled = false;
+            btnBackupManagement.Enabled = false;
             if (ctrTableImport.SelectedValue is string selectedTable)
             {
                 if (!string.IsNullOrEmpty(selectedTable))
@@ -429,7 +425,7 @@ namespace HRImportData.Forms
                     groupBoxData.Enabled = true;
                     groupBoxMapping.Enabled = true;
                     panelControls.Enabled = true;
-                    btnExport.Enabled = true;
+                    btnBackupManagement.Enabled = true;
                     ImportController.TableImport = selectedTable;
                 }
                 else
@@ -437,7 +433,7 @@ namespace HRImportData.Forms
                     groupBoxData.Enabled = false;
                     groupBoxMapping.Enabled = false;
                     panelControls.Enabled = false;
-                    btnExport.Enabled = false;
+                    btnBackupManagement.Enabled = false;
                 }
 
                 ImportController.Release();
@@ -466,6 +462,44 @@ namespace HRImportData.Forms
             DialogResult dialogResult = dialog.ShowDialog();
 
             ImportController.InitReferenceFunction();
+        }
+
+        private async void btnPreviewSql_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                List<string> sqls = new List<string>();
+
+                if (ImportController.ImportTypeStr == "UPDATE")
+                {
+                    sqls = await ImportController.GetUpdateSqlAsync();
+                }
+                else if (ImportController.ImportTypeStr == "INSERT")
+                {
+                    sqls = await ImportController.GetInsertSqlAsync();
+                }
+                else
+                {
+                    MessageBox.Show("Please select import type", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                PreviewSqlDialog dialog = new PreviewSqlDialog(sqls);
+                dialog.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                LogController.Error("btnPreviewSql_Click: " + ex.Message);
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+        }
+
+        private void btnBackupManagement_Click(object sender, EventArgs e)
+        {
+            BackupManagementDialog dialog = new BackupManagementDialog();
+            dialog.ShowDialog();
         }
     }
 }

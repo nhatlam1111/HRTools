@@ -53,11 +53,12 @@
             btnFuncImport = new Button();
             txtLastLog = new TextBox();
             groupBox3 = new GroupBox();
-            btnExport = new Button();
+            btnBackupManagement = new Button();
             ctrTableImport = new ComboBox();
             label5 = new Label();
             ctrImportFunction = new ComboBox();
             panelControls = new Panel();
+            btnPreviewSql = new Button();
             groupBoxData.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)gridExcelData).BeginInit();
             groupBoxMapping.SuspendLayout();
@@ -117,7 +118,7 @@
             // 
             // btnExcelSelectFile
             // 
-            btnExcelSelectFile.Location = new Point(365, 37);
+            btnExcelSelectFile.Location = new Point(318, 37);
             btnExcelSelectFile.Name = "btnExcelSelectFile";
             btnExcelSelectFile.Size = new Size(31, 23);
             btnExcelSelectFile.TabIndex = 9;
@@ -208,7 +209,7 @@
             ctrExcelSelectFile.Enabled = false;
             ctrExcelSelectFile.Location = new Point(12, 37);
             ctrExcelSelectFile.Name = "ctrExcelSelectFile";
-            ctrExcelSelectFile.Size = new Size(347, 23);
+            ctrExcelSelectFile.Size = new Size(300, 23);
             ctrExcelSelectFile.TabIndex = 1;
             // 
             // label1
@@ -305,14 +306,14 @@
             txtLastLog.Multiline = true;
             txtLastLog.Name = "txtLastLog";
             txtLastLog.ReadOnly = true;
-            txtLastLog.Size = new Size(794, 53);
+            txtLastLog.Size = new Size(697, 53);
             txtLastLog.TabIndex = 3;
             txtLastLog.Text = "-------------------";
             txtLastLog.TextAlign = HorizontalAlignment.Center;
             // 
             // groupBox3
             // 
-            groupBox3.Controls.Add(btnExport);
+            groupBox3.Controls.Add(btnBackupManagement);
             groupBox3.Controls.Add(ctrTableImport);
             groupBox3.Controls.Add(label5);
             groupBox3.Controls.Add(ctrImportFunction);
@@ -323,24 +324,24 @@
             groupBox3.TabStop = false;
             groupBox3.Text = "Import Function";
             // 
-            // btnExport
+            // btnBackupManagement
             // 
-            btnExport.Location = new Point(365, 35);
-            btnExport.Name = "btnExport";
-            btnExport.Size = new Size(83, 23);
-            btnExport.TabIndex = 4;
-            btnExport.Text = "Export Excel";
-            btnExport.UseVisualStyleBackColor = true;
-            btnExport.Click += btnExport_Click;
+            btnBackupManagement.Location = new Point(318, 35);
+            btnBackupManagement.Name = "btnBackupManagement";
+            btnBackupManagement.Size = new Size(130, 23);
+            btnBackupManagement.TabIndex = 4;
+            btnBackupManagement.Text = "Backup Management";
+            btnBackupManagement.UseVisualStyleBackColor = true;
+            btnBackupManagement.Click += btnBackupManagement_Click;
             // 
             // ctrTableImport
             // 
             ctrTableImport.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
             ctrTableImport.AutoCompleteSource = AutoCompleteSource.ListItems;
             ctrTableImport.FormattingEnabled = true;
-            ctrTableImport.Location = new Point(195, 36);
+            ctrTableImport.Location = new Point(169, 36);
             ctrTableImport.Name = "ctrTableImport";
-            ctrTableImport.Size = new Size(164, 23);
+            ctrTableImport.Size = new Size(143, 23);
             ctrTableImport.TabIndex = 2;
             ctrTableImport.SelectedValueChanged += ctrTableImport_SelectedValueChanged;
             // 
@@ -359,19 +360,30 @@
             ctrImportFunction.FormattingEnabled = true;
             ctrImportFunction.Location = new Point(6, 36);
             ctrImportFunction.Name = "ctrImportFunction";
-            ctrImportFunction.Size = new Size(183, 23);
+            ctrImportFunction.Size = new Size(157, 23);
             ctrImportFunction.TabIndex = 0;
             ctrImportFunction.SelectedValueChanged += ctrImportFunction_SelectedValueChanged;
             // 
             // panelControls
             // 
             panelControls.BackColor = Color.LightGray;
+            panelControls.Controls.Add(btnPreviewSql);
             panelControls.Controls.Add(txtLastLog);
             panelControls.Controls.Add(btnFuncImport);
             panelControls.Location = new Point(460, 10);
             panelControls.Name = "panelControls";
             panelControls.Size = new Size(899, 60);
             panelControls.TabIndex = 5;
+            // 
+            // btnPreviewSql
+            // 
+            btnPreviewSql.Location = new Point(705, 4);
+            btnPreviewSql.Name = "btnPreviewSql";
+            btnPreviewSql.Size = new Size(93, 51);
+            btnPreviewSql.TabIndex = 4;
+            btnPreviewSql.Text = "Preview SQL";
+            btnPreviewSql.UseVisualStyleBackColor = true;
+            btnPreviewSql.Click += btnPreviewSql_Click;
             // 
             // ImportMain
             // 
@@ -429,7 +441,8 @@
         private ComboBox ctrImportFunction;
         private ComboBox ctrTableImport;
         private Panel panelControls;
-        private Button btnExport;
+        private Button btnBackupManagement;
         private Button btnReferenceFunction;
+        private Button btnPreviewSql;
     }
 }

@@ -4,10 +4,13 @@
     <_LastSelectedProfileId>D:\lam.nguyen\Projects\HRTools\HRImportData\Properties\PublishProfiles\FolderProfile.pubxml</_LastSelectedProfileId>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Update="Forms\BackupManagementDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="Forms\frmProcessing.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="Forms\ImportDialogConfirm.cs">
+    <Compile Update="Forms\PreviewSqlDialog.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="Forms\ReferenceFunctionDialog.cs">

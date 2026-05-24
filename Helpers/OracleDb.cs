@@ -1,12 +1,15 @@
-﻿using Oracle.ManagedDataAccess.Client;
-using Oracle.ManagedDataAccess.Types;
-using System.Data.Common;
-using System.Data;
-using Helpers.classes;
+﻿using Helpers.classes;
 using Helpers.controllers;
-using System.Timers;
+using NPOI.SS.Formula.Functions;
+using Oracle.ManagedDataAccess.Client;
+using Oracle.ManagedDataAccess.Types;
 using Serilog.Core;
+using System.Data;
+using System.Data.Common;
+using System.Timers;
+using System.Windows.Forms;
 using static Org.BouncyCastle.Math.EC.ECCurve;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Helpers
 {
@@ -106,8 +109,15 @@ namespace Helpers
                 OracleCommand cmd = new OracleCommand();
                 cmd.Connection = _con;
                 cmd.CommandText = sql;
-                DbDataReader dr = await cmd.ExecuteReaderAsync();
-                dt.Load(dr);
+
+                using (var adapter = new OracleDataAdapter(cmd))
+                {
+                    adapter.Fill(dt); // hàm sync
+                }
+
+
+                //DbDataReader dr = await cmd.ExecuteReaderAsync();
+                //dt.Load(dr);
             }
             catch (Exception e)
             {
@@ -223,11 +233,11 @@ namespace Helpers
         {
             List<DatabaseTable> tables = new List<DatabaseTable>();
 
-            string sql = $"select TABLE_NAME" +
-                " from USER_TABLES" +
-                " where status = 'VALID' " +
-                " and substr(table_name,1,3) not in ('DIM', 'DIR', 'POP', 'TB_', 'TCM', 'TC_', 'TEB', 'TED', 'TFN', 'TGM', 'TGW', 'THT', 'TIC', 'TIE', 'TIN', 'TLG', 'TOA', 'TPR', 'TPS', 'TSA', 'TSH', 'TSI', 'TST', 'VB_') " +
-                " order by table_name";
+            string sql = $"SELECT q.OBJECT_NAME as TABLE_NAME, q.CREATED as create_time "+
+                          "  FROM user_objects q " +
+                          "  WHERE status = 'VALID' " +
+                          "  and substr(object_name,1,3) not in ('DIM', 'DIR', 'POP', 'TB_', 'TCM', 'TC_', 'TEB', 'TED', 'TFN', 'TGM', 'TGW', 'THT', 'TIC', 'TIE', 'TIN', 'TLG', 'TOA', 'TPR', 'TPS', 'TSA', 'TSH', 'TSI', 'TST', 'VB_') " +
+                          "  AND object_type = 'TABLE'";
 
             var dtTables = await excuteSQLAsync(sql);
 
@@ -236,10 +246,13 @@ namespace Helpers
                 foreach (DataRow col in dtTables.Rows)
                 {
                     string tableName = col["TABLE_NAME"].ToString()!;
+                    DateTime create_time = Convert.ToDateTime(col["CREATE_TIME"]);
+
 
                     tables.Add(new DatabaseTable()
                     {
                         table_name = tableName,
+                        create_time = create_time
                         //columns = await GetTableColumns(tableName)
                     });
                 }
@@ -257,7 +270,7 @@ namespace Helpers
             string sql = $"select upper(q.column_name) as column_name, q.data_type " +
                 $" from USER_TAB_COLUMNS q " +
                 $" where lower(q.TABLE_NAME) = lower('{tableName}')  " +
-                $" and lower(q.column_name) not in ('mod_dt', 'mod_by', 'crt_dt', 'crt_by') " +
+                //$" and lower(q.column_name) not in ('mod_dt', 'mod_by', 'crt_dt', 'crt_by') " +
                 $" order by column_name";
             var dtColumns = await excuteSQLAsync(sql);
 
@@ -319,6 +332,18 @@ namespace Helpers
             }
 
             return await excuteSQLCommandBatchAsync(sqls);
+        }
+
+        public static async Task<bool> CheckProcedureExist(string procedureName)
+        {
+            string sql = $"SELECT COUNT(*) FROM USER_PROCEDURES WHERE OBJECT_NAME = UPPER('{procedureName}')";
+            var dt = await excuteSQLAsync(sql);
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                return Convert.ToInt32(dt.Rows[0][0]) > 0;
+            }
+            return false;
+
         }
 
         public static string GetOracleDbTypeName(OracleDbType dbType)

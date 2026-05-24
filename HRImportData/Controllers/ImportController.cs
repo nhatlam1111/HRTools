@@ -14,8 +14,8 @@ namespace HRImportData.Controllers
     public static class ImportController
     {
         public delegate string ValidateFromControllerDelegate(DataRow rowImport, DataRow validateColumn);
-        public delegate Task<bool> ValidateImportDelegate(DataTable dtColumnMapping, List<DataRow> importDatas, ValidateFromControllerDelegate validateFromController, ValidateOption options);
-        public static ValidateImportDelegate ValidateImport = ValidateImportData;
+        //public delegate Task<bool> ValidateImportDelegate(DataTable dtColumnMapping, List<DataRow> importDatas, ValidateFromControllerDelegate validateFromController, ValidateOption options);
+        //public static ValidateImportDelegate ValidateImport = ValidateImportData;
 
 
         public static List<DatabaseColumn> DatabaseColumns = new List<DatabaseColumn>();
@@ -31,7 +31,7 @@ namespace HRImportData.Controllers
 
         public static ValidateOption validateOption = new ValidateOption();
 
-        private static string ImportTypeStr { get{
+        public static string ImportTypeStr { get{
                 string importTypeName = Enum.GetName(typeof(IMPORT_TYPE), ImportController.ImportType) ?? "";
                 return importTypeName == "" ? "" : importTypeName.StartsWith("INSERT") ? "INSERT" : "UPDATE";
             } 
@@ -144,7 +144,7 @@ namespace HRImportData.Controllers
 
         public static async Task<bool> ExportTableData()
         {
-            await WriteInformation($"Begin Export Data: {ImportController.TableImport}", true);
+            WriteInformation($"Begin Export Data: {ImportController.TableImport}", true);
             string sqlBackup = string.Format(SQLTemplates.ORACLE_SELECT_BACKUP_DB_TABLE, TableImport);
 
             DataTable dtBackup = await OracleDb.excuteSQLAsync(sqlBackup);
@@ -161,7 +161,7 @@ namespace HRImportData.Controllers
             dtBackup.Clear();
             dtBackup.Dispose();
 
-            await WriteInformation($"End Export Data: {ImportController.TableImport}", true);
+            WriteInformation($"End Export Data: {ImportController.TableImport}", true);
 
             // Force memory release
             MainController.ReleaseMemory();
@@ -208,35 +208,35 @@ namespace HRImportData.Controllers
             return true;
         }
 
-        private static async Task<bool> ValidateImportData(DataTable dtColumnMapping, List<DataRow> importDatas, ValidateFromControllerDelegate validateFromController, ValidateOption options)
+        private static async Task<bool> ValidateImportData()
         {
             bool valid = true;
-            await WriteInformation("Validating Mapping Column...", true);
+            WriteInformation("Validating Mapping Column...", true);
 
             var dtColumnMappingLinq = dtColumnMapping.AsEnumerable();
             var importColumns = dtColumnMappingLinq.Where(q => !string.IsNullOrEmpty(q["Database"] + "")).ToList();
             bool isHaveDBMapping = dtColumnMappingLinq.Any(q => !string.IsNullOrEmpty(q["DBMapping"] + "") && (bool)q["DBMapping"]);
             string ErrorCol = "";
 
-            if (options.validate_dbmapping && !isHaveDBMapping)
+            if (validateOption.validate_dbmapping && !isHaveDBMapping)
             {
-                await WriteInformation("Validating [DBMapping] column...", true);
+                WriteInformation("Validating [DBMapping] column...", true);
                 valid = WriteError("Cannot find any [DBMapping] column", true);
                 goto END_VALIDATE;
             }
 
-            if (importDatas != null && importDatas.Count > 0)
+            if (ExcelWorkSheetDataImport != null && ExcelWorkSheetDataImport.Count > 0)
             {
-                if (options.validate_dbmapping_data_duplicate)
+                if (validateOption.validate_dbmapping_data_duplicate)
                 {
-                    await WriteInformation("Validating Duplicate value(s) on [DBMapping] column(s)...", true);
+                    WriteInformation("Validating Duplicate value(s) on [DBMapping] column(s)...", true);
 
                     var DBMappingColumns = dtColumnMappingLinq
                         .Where(q => !string.IsNullOrEmpty(q["DBMapping"] + "") && (bool)q["DBMapping"])
                         .Select(s => s["Excel"] + "")
                         .ToList();
 
-                    var groupDuplicated = importDatas
+                    var groupDuplicated = ExcelWorkSheetDataImport
                         .GroupBy(g => g, new Classes.DataRowComparer(DBMappingColumns))
                         .Where(q => q.Count() > 1);
 
@@ -249,12 +249,12 @@ namespace HRImportData.Controllers
                     }
                 }
 
-                if (options.validate_not_null || options.validate_value_data_type || options.validate_from_controller)
+                if (validateOption.validate_not_null || validateOption.validate_value_data_type || validateOption.validate_from_controller)
                 {
-                    await WriteInformation($"Validating data...", false);
-                    for (int i = 0; i < importDatas.Count; i++)
+                    WriteInformation($"Validating data...", false);
+                    for (int i = 0; i < ExcelWorkSheetDataImport.Count; i++)
                     {
-                        var rowData = importDatas[i];
+                        var rowData = ExcelWorkSheetDataImport[i];
                         bool invalid = false;
                         string errorMessageFromController = "";
 
@@ -262,9 +262,9 @@ namespace HRImportData.Controllers
                         {
                             var value = rowData[col["Excel"] + ""];
 
-                            if (!options.validate_not_null && string.IsNullOrEmpty(value + "")) continue;
+                            if (!validateOption.validate_not_null && string.IsNullOrEmpty(value + "")) continue;
 
-                            if (options.validate_value_data_type)
+                            if (validateOption.validate_value_data_type)
                             {
                                 switch ((OracleDbType)col["Type"])
                                 {
@@ -305,13 +305,6 @@ namespace HRImportData.Controllers
                                 }
                             }
 
-                            if (options.validate_from_controller && validateFromController != null)
-                            {
-                                //validate theo dieu kien tung loai import
-                                errorMessageFromController = validateFromController(rowData, col);
-                                invalid = !string.IsNullOrEmpty(errorMessageFromController);
-                            }
-
 
                             if (invalid)
                             {
@@ -341,20 +334,23 @@ namespace HRImportData.Controllers
             }
 
         END_VALIDATE:
-            if (valid) await WriteInformation("Validating completed", true);
-            else await WriteInformation("Validating got error", true);
+            if (valid) WriteInformation("Validating completed", true);
+            else WriteInformation("Validating got error", true);
             return valid;
         }
 
         internal static async Task ImportData()
         {
+            bool isSuccess = false;
             frmImport.Enabled = false;
             frmImport.frmProcessing.Show();
-            await MainController.WriteInformation("Importing...", true);
+            MainController.WriteInformation("Importing...", true);
 
             var excelData = ExcelWorkSheetProcessing.datas;
             ExcelWorkSheetDataImport = excelData.AsEnumerable().ToList();
             ExcelWorkSheetDataImport.RemoveRange(0, ExcelWorkSheetStartRowImport - 1);
+
+
             var triggers = await OracleDb.GetTableTriggers(TableImport);
 
             ValidateFromControllerDelegate validateTemplate = null;
@@ -365,14 +361,14 @@ namespace HRImportData.Controllers
                     break;
             }
 
-            bool valid = await ValidateImport(dtColumnMapping, ExcelWorkSheetDataImport, validateTemplate, validateOption);
+            bool valid = await ValidateImportData();
 
             if (valid)
             {
                 //backup db data to execl
                 if (validateOption.backup_data)
                 {
-                    await MainController.WriteInformation("Backup data...", true);
+                    MainController.WriteInformation("Backup data...", true);
                     bool exported = false;
                     if (validateOption.backup_table_data)
                     {
@@ -393,7 +389,7 @@ namespace HRImportData.Controllers
                 //disable trigger 
                 if (validateOption.trigger_disabled)
                 {
-                    await MainController.WriteInformation($"Disable triggers [{string.Join(", ", triggers)}]...", true);
+                    MainController.WriteInformation($"Disable triggers [{string.Join(", ", triggers)}]...", true);
 
                     if (triggers.Count > 0)
                     {
@@ -402,21 +398,21 @@ namespace HRImportData.Controllers
                 }
 
                 //import
-                await MainController.WriteInformation($"Import data to database...", true);
+                MainController.WriteInformation($"Import data to database...", true);
                 if(ImportTypeStr == "INSERT")
                 {
-                    await InsertToDb();
+                    isSuccess = await InsertToDb();
                 }
                 else
                 {
-                    await UpdateToDb();
+                    isSuccess = await UpdateToDb();
                 }
                 
 
                 //enable trigger 
                 if (validateOption.trigger_disabled)
                 {
-                    await MainController.WriteInformation($"Enable triggers [{string.Join(", ", triggers)}]...", true);
+                    MainController.WriteInformation($"Enable triggers [{string.Join(", ", triggers)}]...", true);
 
                     if (triggers.Count > 0)
                     {
@@ -428,8 +424,18 @@ namespace HRImportData.Controllers
             {
                 goto END_IMPORT;
             }
-            await MainController.WriteInformation($"Import data to database completed", true);
-            MessageBox.Show("Completed", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            if(!isSuccess)
+            {
+                MainController.WriteInformation($"Import data to database failed", true);
+                MessageBox.Show("Import data failed", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            else
+            {
+                MainController.WriteInformation($"Import data to database completed", true);
+                MessageBox.Show("Completed", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            
 
         END_IMPORT:
             frmImport.frmProcessing.Hide();
@@ -542,7 +548,7 @@ namespace HRImportData.Controllers
 
                 if (!string.IsNullOrEmpty(saveBackup))
                 {
-                    await MainController.WriteInformation("Backup data: Cancelled", true);
+                    MainController.WriteInformation("Backup data: Cancelled", true);
                     //DialogResult dialogResult = MessageBox.Show("Backup data has been cancelled, do you want to continue?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                     //if (dialogResult != DialogResult.Yes) valid = false;
                 }
@@ -557,198 +563,305 @@ namespace HRImportData.Controllers
         }
 
 
-        private static async Task UpdateToDb()
+        private static async Task<bool> UpdateToDb()
         {
-            //prepare
+            bool isSuccess = true;
             List<string> listSQL = new List<string>();
-            var dtColumnMappingLinq = dtColumnMapping.AsEnumerable();
-            var DBMappingColumns = dtColumnMappingLinq
-                .Where(q => !string.IsNullOrEmpty(q["DBMapping"] + "") && (bool)q["DBMapping"])
-                .ToList();
-
-            var importColumns = dtColumnMappingLinq
-                .Where(q => !string.IsNullOrEmpty(q["Database"] + "") && !(!string.IsNullOrEmpty(q["DBMapping"] + "") && (bool)q["DBMapping"]))
-                .ToList();
-
-            var tempDBMappingColumn = DatabaseColumn.ToList(DBMappingColumns);
-            var tempImportColumn = DatabaseColumn.ToList(importColumns);
-
-            string vDbColumns = string.Join(",", tempDBMappingColumn.Select(s => $"{s.column_name}").ToList());
-            DateTime dtImport = DateTime.Now;
-            foreach (var data in ExcelWorkSheetDataImport)
+            try
             {
-                List<string> tempValuesDBMapping = new List<string>();
-                List<string> tempColumnValue = new List<string>();
-
-                foreach (var col in tempDBMappingColumn)
-                {
-                    var excelValue = data[col.excel_mapping];
-                    if (!string.IsNullOrEmpty(col.sql_reference))
-                    {
-                        string _sql = col.sql_reference.Replace("$[value]", excelValue + "");
-                        var _dt = await OracleDb.excuteSQLAsync(_sql);
-                        if (_dt != null && _dt.Rows.Count > 0)
-                        {
-                            excelValue = _dt.Rows[0][0] + "";
-                        }
-                        else
-                        {
-                            excelValue = ""; //default value if sql reference not return any value
-                        }
-
-                        tempValuesDBMapping.Add($"'{excelValue}'");
-                    }
-                    else
-                    {
-                        tempValuesDBMapping.Add($"'{data[col.excel_mapping]}'");
-                    }
-                }
-
-
-                foreach (var col in tempImportColumn)
-                {
-                    var excelValue = data[col.excel_mapping];
-                    if (!string.IsNullOrEmpty(col.sql_reference))
-                    {
-                        string _sql = $"({col.sql_reference.Replace("$[value]", excelValue + "")})";
-                        tempColumnValue.Add($"{col.column_name} = {_sql}");
-                    }
-                    else
-                    {
-                        if (col.column_type_name != "number")
-                        {
-                            tempColumnValue.Add($"{col.column_name} = '{excelValue}'");
-                        }
-                        else
-                        {
-                            tempColumnValue.Add($"{col.column_name} = {((excelValue == null || excelValue == DBNull.Value || excelValue + "" == "") ? "''" : excelValue)}");
-                        }
-                    }
-                }
-
-                tempColumnValue.Add($"mod_by = '{currentLogin.SiteUserName}'");
-                tempColumnValue.Add($"mod_dt = to_date('{dtImport.ToString("yyyyMMddHHmmss")}', 'yyyymmddhh24miss')");
-
-                string valueDBMapping = string.Join(",", tempValuesDBMapping);
-                string updateColumn = string.Join(",", tempColumnValue);
-                string updateWhere = $"del_if = 0 and ({vDbColumns}) = ({valueDBMapping})";
-
-                string sqlImport = string.Format(SQLTemplates.ORACLE_UPDATE_IMPORT_DATA, TableImport, updateColumn, updateWhere);
-                listSQL.Add(sqlImport);
+                listSQL = await GetUpdateSqlAsync();
+            }
+            catch (Exception ex)
+            {
+                LogController.Error(ex.Message);
+                return false;
             }
 
             Task ImportTask = new Task(async () =>
             {
-                await OracleDb.excuteSQLCommandBatchAsync(listSQL);
+                isSuccess = await OracleDb.excuteSQLCommandBatchAsync(listSQL);
             });
             ImportTask.Start();
             await ImportTask;
+
+            return isSuccess;
         }
 
 
         private static async Task<bool> InsertToDb()
         {
-            bool valid = true;
-            DateTime dtImport = DateTime.Now;
+            bool isSuccess = true;
             List<string> listSQL = new List<string>();
-            var dtColumnMappingLinq = dtColumnMapping.AsEnumerable();
-            var importColumns = dtColumnMappingLinq
-                .Where(q => !string.IsNullOrEmpty(q["Database"] + ""))
-                .ToList();
-
-            var tempImportColumn = DatabaseColumn.ToList(importColumns);
-
-            //default columns
-            if (DatabaseColumns.Any(q => q.column_name == "PK"))
+            try
             {
-                tempImportColumn.Add(new DatabaseColumn() { column_name = "PK", column_type = OracleDbType.Double });
+                listSQL = await GetInsertSqlAsync();
             }
-
-            if (DatabaseColumns.Any(q => q.column_name == "CRT_DT"))
+            catch (Exception ex)
             {
-                tempImportColumn.Add(new DatabaseColumn() { column_name = "CRT_DT", column_type = OracleDbType.Date });
+                LogController.Error(ex.Message);
+                return false;
             }
-
-            if (DatabaseColumns.Any(q => q.column_name == "CRT_DT"))
-            {
-                tempImportColumn.Add(new DatabaseColumn() { column_name = "CRT_BY", column_type = OracleDbType.Varchar2 });
-            }
-
-            //end default columns
-
-            foreach (var data in ExcelWorkSheetDataImport)
-            {
-                List<string> tempColumnValue = new List<string>();
-
-
-                foreach (var col in tempImportColumn)
-                {
-                    if (col.column_name == "PK")
-                    {
-                        tempColumnValue.Add($"{TableImport}_SEQ.nextval");
-                        continue;
-                    }
-
-                    if (col.column_name == "CRT_DT")
-                    {
-                        tempColumnValue.Add($"to_date('{dtImport.ToString("yyyyMMddHHmmss")}', 'yyyymmddhh24miss')");
-                        continue;
-                    }
-
-                    if (col.column_name == "CRT_BY")
-                    {
-                        tempColumnValue.Add($"'{currentLogin.SiteUserName}'");
-                        continue;
-                    }
-
-                    var excelValue = data[col.excel_mapping];
-                    if (!string.IsNullOrEmpty(col.sql_reference))
-                    {
-                        string _sql = col.sql_reference.Replace("$[value]", excelValue + "");
-                        var _dt = await OracleDb.excuteSQLAsync(_sql);
-                        if (_dt != null && _dt.Rows.Count > 0)
-                        {
-                            excelValue = _dt.Rows[0][0] + "";
-                        }
-                        else
-                        {
-                            excelValue = ""; //default value if sql reference not return any value
-                        }
-
-                        tempColumnValue.Add($"'{excelValue}'");
-                    }
-                    else
-                    {
-                        if (col.column_type_name != "number")
-                        {
-                            tempColumnValue.Add($"'{data[col.excel_mapping]}'");
-                        }
-                        else
-                        {
-                            tempColumnValue.Add($"{data[col.excel_mapping]}");
-                        }
-                    }
-                }
-
-
-                string insertColumns = string.Join(",", tempImportColumn.Select(s => s.column_name).ToList());
-                string insertValues = string.Join(",", tempColumnValue);
-
-                string sqlImport = string.Format(SQLTemplates.ORACLE_INSERT_IMPORT_DATA, TableImport, insertColumns, insertValues);
-                listSQL.Add(sqlImport);
-            }
-
 
             Task importTask = new Task(async () =>
             {
-                valid = await OracleDb.excuteSQLCommandBatchAsync(listSQL);
+                isSuccess = await OracleDb.excuteSQLCommandBatchAsync(listSQL);
             });
 
             importTask.Start();
 
             await importTask;
 
-            return valid;
+            return isSuccess;
+        }
+
+        internal static async Task<List<string>> GetUpdateSqlAsync()
+        {
+            try
+            {
+                if (ExcelWorkSheetDataImport.Count <= 0)
+                {
+                    var excelData = ExcelWorkSheetProcessing.datas;
+                    ExcelWorkSheetDataImport = excelData.AsEnumerable().ToList();
+                    ExcelWorkSheetDataImport.RemoveRange(0, ExcelWorkSheetStartRowImport - 1);
+                }
+
+                List<string> listSQL = new List<string>();
+                var dtColumnMappingLinq = dtColumnMapping.AsEnumerable();
+                var DBMappingColumns = dtColumnMappingLinq
+                    .Where(q => !string.IsNullOrEmpty(q["DBMapping"] + "") && (bool)q["DBMapping"])
+                    .ToList();
+
+                var importColumns = dtColumnMappingLinq
+                    .Where(q => !string.IsNullOrEmpty(q["Database"] + "") && !(!string.IsNullOrEmpty(q["DBMapping"] + "") && (bool)q["DBMapping"]))
+                    .ToList();
+
+                var tempDBMappingColumn = DatabaseColumn.ToList(DBMappingColumns);
+                var tempImportColumn = DatabaseColumn.ToList(importColumns);
+
+                string vDbColumns = string.Join(",", tempDBMappingColumn.Select(s => $"{s.column_name}").ToList());
+                DateTime dtImport = DateTime.Now;
+                foreach (var data in ExcelWorkSheetDataImport)
+                {
+                    List<string> tempValuesDBMapping = new List<string>();
+                    List<string> tempColumnValue = new List<string>();
+
+                    foreach (var col in tempDBMappingColumn)
+                    {
+                        if (!string.IsNullOrEmpty(col.sql_reference))
+                        {
+                            ReferenceFunction refFunc = referenceFunctions.FirstOrDefault(f => f.Sql == col.sql_reference);
+
+                            var excelValue = await GetReferrenceValue(refFunc, data[col.excel_mapping] + "");
+                            tempValuesDBMapping.Add($"'{excelValue}'");
+                        }
+                        else
+                        {
+                            tempValuesDBMapping.Add($"'{data[col.excel_mapping]}'");
+                        }
+                    }
+
+
+                    foreach (var col in tempImportColumn)
+                    {
+                        var excelValue = data[col.excel_mapping];
+                        if (!string.IsNullOrEmpty(col.sql_reference))
+                        {
+                            ReferenceFunction refFunc = referenceFunctions.FirstOrDefault(f => f.Sql == col.sql_reference);
+
+                            excelValue = await GetReferrenceValue(refFunc, excelValue + "");
+                            tempColumnValue.Add($"{col.column_name} = '{excelValue}'");
+                        }
+                        else
+                        {
+                            if (col.column_type_name != "number")
+                            {
+                                tempColumnValue.Add($"{col.column_name} = '{excelValue}'");
+                            }
+                            else
+                            {
+                                tempColumnValue.Add($"{col.column_name} = {((excelValue == null || excelValue == DBNull.Value || excelValue + "" == "") ? "''" : excelValue)}");
+                            }
+                        }
+                    }
+
+                    if (DatabaseColumns.Any(q => q.column_name == "MOD_BY"))
+                    {
+                        tempColumnValue.Add($"mod_by = '{currentLogin.SiteUserName}'");
+                    }
+
+                    if (DatabaseColumns.Any(q => q.column_name == "MOD_DT"))
+                    {
+                        tempColumnValue.Add($"mod_dt = to_date('{dtImport.ToString("yyyyMMddHHmmss")}', 'yyyymmddhh24miss')");
+                    }
+
+                    string valueDBMapping = string.Join(",", tempValuesDBMapping);
+                    string updateColumn = string.Join(",", tempColumnValue);
+                    string updateWhere = "";
+
+                    
+
+                    if (DatabaseColumns.Any(q => q.column_name == "DEL_IF"))
+                    {
+                        updateWhere = $"del_if = 0 and ({vDbColumns}) = ({valueDBMapping})";
+                    }
+                    else
+                    {
+                        updateWhere = $"({vDbColumns}) = ({valueDBMapping})";
+                    }
+
+                    string sqlImport = string.Format(SQLTemplates.ORACLE_UPDATE_IMPORT_DATA, TableImport, updateColumn, updateWhere);
+                    listSQL.Add(sqlImport);
+                }
+
+                return listSQL;
+            }
+            catch (Exception ex)
+            {
+                LogController.Error(ex.Message);
+                throw;
+            }
+            
+        }
+
+
+        internal static async Task<List<string>> GetInsertSqlAsync()
+        {
+            try
+            {
+                if (ExcelWorkSheetDataImport.Count <= 0)
+                {
+                    var excelData = ExcelWorkSheetProcessing.datas;
+                    ExcelWorkSheetDataImport = excelData.AsEnumerable().ToList();
+                    ExcelWorkSheetDataImport.RemoveRange(0, ExcelWorkSheetStartRowImport - 1);
+                }
+                
+
+                List<string> listSQL = new List<string>();
+                DateTime dtImport = DateTime.Now;
+
+                var dtColumnMappingLinq = dtColumnMapping.AsEnumerable();
+                var importColumns = dtColumnMappingLinq
+                    .Where(q => !string.IsNullOrEmpty(q["Database"] + ""))
+                    .ToList();
+
+                var tempImportColumn = DatabaseColumn.ToList(importColumns);
+
+                //default columns
+                if (DatabaseColumns.Any(q => q.column_name == "PK"))
+                {
+                    tempImportColumn.Add(new DatabaseColumn() { column_name = "PK", column_type = OracleDbType.Double });
+                }
+
+                if (DatabaseColumns.Any(q => q.column_name == "CRT_DT"))
+                {
+                    tempImportColumn.Add(new DatabaseColumn() { column_name = "CRT_DT", column_type = OracleDbType.Date });
+                }
+
+                if (DatabaseColumns.Any(q => q.column_name == "CRT_DT"))
+                {
+                    tempImportColumn.Add(new DatabaseColumn() { column_name = "CRT_BY", column_type = OracleDbType.Varchar2 });
+                }
+
+                //end default columns
+
+                foreach (var data in ExcelWorkSheetDataImport)
+                {
+                    List<string> tempColumnValue = new List<string>();
+
+                    foreach (var col in tempImportColumn)
+                    {
+                        if (col.column_name == "PK")
+                        {
+                            tempColumnValue.Add($"{TableImport}_SEQ.nextval");
+                            continue;
+                        }
+
+                        if (col.column_name == "CRT_DT")
+                        {
+                            tempColumnValue.Add($"to_date('{dtImport.ToString("yyyyMMddHHmmss")}', 'yyyymmddhh24miss')");
+                            continue;
+                        }
+
+                        if (col.column_name == "CRT_BY")
+                        {
+                            tempColumnValue.Add($"'{currentLogin.SiteUserName}'");
+                            continue;
+                        }
+                        
+
+                        if (!string.IsNullOrEmpty(col.sql_reference))
+                        {
+                            ReferenceFunction refFunc = referenceFunctions.FirstOrDefault(f => f.Sql == col.sql_reference);
+                            var excelValue = await GetReferrenceValue(refFunc, data[col.excel_mapping] + "");
+                            tempColumnValue.Add($"'{excelValue}'");
+                        }
+                        else
+                        {
+                            if (col.column_type_name != "number")
+                            {
+                                tempColumnValue.Add($"'{data[col.excel_mapping]}'");
+                            }
+                            else
+                            {
+                                tempColumnValue.Add($"{data[col.excel_mapping]}");
+                            }
+                        }
+                    }
+
+
+                    string insertColumns = string.Join(",", tempImportColumn.Select(s => s.column_name).ToList());
+                    string insertValues = string.Join(",", tempColumnValue);
+
+                    string sqlImport = string.Format(SQLTemplates.ORACLE_INSERT_IMPORT_DATA, TableImport, insertColumns, insertValues);
+                    listSQL.Add(sqlImport);
+                }
+
+
+                return listSQL;
+            }
+            catch (Exception ex)
+            {
+                LogController.Error(ex.Message);
+                throw;
+            }
+            
+        }
+
+        private static async Task<object> GetReferrenceValue(ReferenceFunction refFunction, string value)
+        {
+            if (refFunction == null)
+            {
+                throw new ArgumentNullException(nameof(refFunction), "Reference function cannot be null.");
+            }
+
+            if (string.IsNullOrEmpty(refFunction.Sql))
+            { 
+                throw new ArgumentNullException(nameof(refFunction.Sql), "SQL reference cannot be null or empty.");
+            }
+
+            if(!refFunction.Sql.Contains("$[value]"))
+            {
+                throw new ArgumentException("SQL reference must contain $[value] placeholder.", nameof(refFunction.Sql));
+            }
+
+            if (string.IsNullOrEmpty(value))
+            {
+                return ""; //default value if value is null or empty
+            }
+
+            string _sql = refFunction.Sql.Replace("$[value]", value);
+            string refValue = "";
+            var _dt = await OracleDb.excuteSQLAsync(_sql);
+            if (_dt != null && _dt.Rows.Count > 0)
+            {
+                refValue = _dt.Rows[0][0] + "";
+            }
+            else
+            {
+                throw new Exception($"SQL reference [{refFunction.Name}] with value [{value}] did not return any result.");
+            }
+
+            return refValue;
         }
     }
 }

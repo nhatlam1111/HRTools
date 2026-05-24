@@ -78,8 +78,8 @@ namespace HRImportData.Classes
         public bool validate_not_null { get; set; } = true;
         public bool validate_value_data_type { get; set; } = true;
         public bool validate_from_controller { get; set; } = true;
-        public bool backup_data {  get; set; } = true;
-        public bool backup_table_data { get; set; } = true;
+        public bool backup_data {  get; set; } = false;
+        public bool backup_table_data { get; set; } = false;
         public bool trigger_disabled { get; set; } = false;
     }
 
